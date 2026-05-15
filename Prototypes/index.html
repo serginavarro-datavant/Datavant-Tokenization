@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Databricks App — DART DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <style>
+    /* ── DART Design System tokens ─────────────────────── */
+    :root {
+      --bg-canvas:        #f9f9fb;
+      --bg-white:         #ffffff;
+      --bg-mild:          #f2f3f8;
+
+      --color-primary:    #2945f0;
+      --color-primary-border: #102cd5;
+      --color-text:       #020202;
+      --color-dimmed:     #606a78;
+      --color-error:      #de1212;
+      --color-success:    #046338;
+
+      --border-default:   #c7ccd4;
+      --border-mild:      #c7ccd4;
+
+      --info-bg:          #e7eafe;
+      --info-bdr:         #d6daff;
+      --info-txt:         #2945f0;
+
+      --warn-bg:          #e7eafe;
+      --warn-bdr:         #d6daff;
+      --warn-txt:         #2945f0;
+
+      --font:             'Geist', sans-serif;
+      --font-icons:       'Material Icons';
+
+      --radius-card:      8px;
+      --radius-input:     6px;
+      --radius-step:      999px;
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-canvas);
+      color: var(--color-text);
+      font-size: 12px;
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+    a { text-decoration: none; color: inherit; cursor: pointer; }
+    button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+    input, select, textarea { font-family: var(--font); }
+
+    /* ── App shell ─────────────────────────────────────── */
+    .app-shell {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 32px 32px 0;
+    }
+
+    /* ── Page header ───────────────────────────────────── */
+    .page-hd { margin-bottom: 28px; }
+    .page-hd h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 28px;
+      margin-bottom: 4px;
+    }
+    .page-hd p {
+      font-size: 12px;
+      color: var(--color-dimmed);
+      line-height: 16px;
+    }
+
+    /* ── Stepper ───────────────────────────────────────── */
+    .stepper {
+      display: flex;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .step-circle {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-step);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 500;
+      flex-shrink: 0;
+      border: 2px solid var(--color-primary-border);
+      transition: all 0.2s;
+    }
+    .step-circle.done {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+      font-size: 14px;
+    }
+    .step-circle.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+    .step-circle.idle {
+      background: var(--bg-mild);
+      border-color: var(--color-primary-border);
+      color: var(--color-text);
+    }
+    .step-body { display: flex; flex-direction: column; gap: 2px; }
+    .step-label {
+      font-size: 10px; font-weight: 500;
+      color: var(--color-text);
+      line-height: 14px;
+      white-space: nowrap;
+    }
+    .step-connector {
+      flex: 1;
+      height: 1px;
+      background: var(--color-primary-border);
+      min-width: 40px;
+      max-width: 80px;
+      margin: 0 4px;
+      margin-bottom: 14px; /* align with circle center */
+    }
+
+    /* ── Tab panels ────────────────────────────────────── */
+    .tab-panel { display: none; flex-direction: column; gap: 16px; }
+    .tab-panel.active { display: flex; }
+
+    /* ── Cards ─────────────────────────────────────────── */
+    .card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+    .card-hd {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-mild);
+    }
+    .card-hd .icon {
+      font-family: var(--font-icons);
+      font-size: 13px;
+      color: var(--color-text);
+      line-height: 1;
+      user-select: none;
+    }
+    .card-hd span.title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 20px;
+    }
+    .card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Field ─────────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field-row { display: flex; gap: 16px; }
+    .field-row .field { flex: 1 0 0; min-width: 0; }
+
+    /* Label block: label text + required asterisk + hint — all above the input */
+    .field-label-block { display: flex; flex-direction: column; margin-bottom: 0; }
+    .field-label-row { display: flex; align-items: center; gap: 0; }
+    .field-label {
+      font-size: 12px; font-weight: 500;
+      color: var(--color-text);
+      line-height: 16px;
+    }
+    .field-required { color: var(--color-error); font-size: 12px; font-weight: 500; }
+    .field-hint {
+      font-size: 10px;
+      color: var(--color-dimmed);
+      line-height: 14px;
+      margin-top: 1px;
+    }
+
+    /* ── Inputs ────────────────────────────────────────── */
+    .input-text, .input-select {
+      height: 34px;
+      background: var(--bg-white);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-input);
+      padding: 0 12px;
+      font-size: 12px;
+      color: var(--color-text);
+      width: 100%;
+      outline: none;
+      font-family: var(--font);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-text:focus, .input-select:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(41,69,240,0.12);
+    }
+    .input-text::placeholder { color: var(--color-dimmed); }
+    .input-select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '';
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      width: 10px; height: 6px;
+      background: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23606a78' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center;
+      pointer-events: none;
+    }
+
+    /* ── Divider ───────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border-mild); margin: 4px -20px; }
+
+    /* ── Info / alert boxes ────────────────────────────── */
+    .info-box {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 16px;
+      border-radius: var(--radius-input);
+      border: 1px solid;
+      font-size: 12px; font-weight: 500; line-height: 16px;
+    }
+    .info-box svg { flex-shrink: 0; margin-top: 1px; }
+    .info-box.blue { background: var(--info-bg); border-color: var(--info-bdr); color: var(--info-txt); }
+    .info-box.green { background: #ecfdf5; border-color: #a7f3d0; color: #046338; }
+
+    /* ── Notice bar ────────────────────────────────────── */
+    .notice-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-input);
+      background: var(--info-bg);
+      border: 1px solid var(--info-bdr);
+      color: var(--info-txt);
+      font-size: 12px; font-weight: 500;
+    }
+    .notice-bar a { text-decoration: underline; }
+
+    /* ── Radio group (write mode) ──────────────────────── */
+    .radio-group { display: flex; gap: 24px; flex-wrap: wrap; }
+    .radio-item { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .radio-item input[type="radio"] {
+      accent-color: var(--color-primary);
+      width: 16px; height: 16px; cursor: pointer;
+    }
+    .radio-label { font-size: 12px; font-weight: 500; color: var(--color-text); }
+
+    .field-group-label {
+      font-size: 12px; font-weight: 500; color: var(--color-text); line-height: 16px;
+      margin-bottom: 8px;
+    }
+
+    /* ── Checkboxes ────────────────────────────────────── */
+    .check-list { display: flex; flex-direction: column; }
+    .check-row {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-mild);
+    }
+    .check-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .check-row input[type="checkbox"] {
+      width: 16px; height: 16px; margin-top: 1px;
+      accent-color: var(--color-primary);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .check-label { font-size: 12px; font-weight: 500; color: var(--color-text); line-height: 16px; }
+    .check-hint  { font-size: 10px; color: var(--color-dimmed); margin-top: 2px; line-height: 14px; }
+
+    /* ── Stepper input ─────────────────────────────────── */
+    .num-stepper { display: flex; align-items: center; gap: 0; }
+    .num-stepper-btn {
+      width: 32px; height: 34px;
+      border: 1px solid var(--border-default);
+      background: var(--bg-white);
+      font-size: 16px; color: var(--color-text);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .num-stepper-btn:first-child { border-radius: var(--radius-input) 0 0 var(--radius-input); border-right: none; }
+    .num-stepper-btn:last-child  { border-radius: 0 var(--radius-input) var(--radius-input) 0; border-left: none; }
+    .num-stepper-btn:hover { background: var(--bg-mild); }
+    .num-stepper-input {
+      width: 60px; height: 34px;
+      border: 1px solid var(--border-default);
+      text-align: center; font-size: 12px;
+      color: var(--color-text); outline: none;
+      font-family: var(--font);
+    }
+
+    /* ── Direction cards ───────────────────────────────── */
+    .dir-cards { display: flex; gap: 12px; }
+    .dir-card {
+      flex: 1;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-card);
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .dir-card:hover { border-color: var(--color-primary); }
+    .dir-card.selected {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(41,69,240,0.12);
+    }
+    .dir-card-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .dir-card-title {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 14px; font-weight: 500; color: var(--color-text);
+    }
+    .dir-card-title .icon { font-family: var(--font-icons); font-size: 14px; }
+    .dir-card p { font-size: 11px; color: var(--color-dimmed); line-height: 1.6; margin-bottom: 12px; }
+    .dir-flow { display: flex; align-items: center; gap: 4px; }
+    .flow-node {
+      background: var(--bg-mild);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 10px; color: var(--color-text);
+    }
+    .flow-arrow { color: var(--color-dimmed); font-size: 11px; }
+
+    /* ── Runtime table ─────────────────────────────────── */
+    .rt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .rt-table th {
+      font-size: 11px; font-weight: 600; color: var(--color-dimmed);
+      padding: 8px 0; text-align: left; border-bottom: 1px solid var(--border-mild);
+    }
+    .rt-table td { padding: 11px 0; border-bottom: 1px solid var(--border-mild); }
+    .rt-table tr:last-child td { border-bottom: 4px solid var(--border-mild); }
+    .rt-table .col-n { width: 68px; padding-left: 20px; color: var(--color-dimmed); font-size: 12px; }
+    .rt-tag {
+      display: inline-flex; align-items: center;
+      background: var(--bg-mild);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px; font-weight: 500; color: var(--color-text);
+    }
+    .rt-tag.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 0 0;
+      border-top: 1px solid var(--border-default);
+    }
+    .footer-left { display: flex; align-items: center; gap: 8px; }
+    .footer-right { display: flex; gap: 8px; align-items: center; }
+    .saved-msg {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 500;
+      color: var(--color-success);
+    }
+
+    /* ── Buttons ───────────────────────────────────────── */
+    .btn {
+      height: 32px; padding: 0 16px;
+      border-radius: var(--radius-input);
+      font-size: 12px; font-weight: 500;
+      font-family: var(--font);
+      display: flex; align-items: center; gap: 6px;
+      transition: all 0.15s; cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-outline {
+      background: var(--bg-white);
+      border: 1px solid var(--border-default);
+      color: var(--color-text);
+    }
+    .btn-outline:hover { background: var(--bg-mild); }
+    .btn-filled {
+      background: var(--color-primary);
+      border: 1px solid var(--color-primary);
+      color: #fff;
+    }
+    .btn-filled:hover { background: var(--color-primary-border); }
+    .btn-run {
+      background: #16a34a; border: 1px solid #16a34a; color: #fff;
+    }
+    .btn-run:hover { background: #15803d; }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .field-row { flex-direction: column; }
+      .dir-cards { flex-direction: column; }
+      .stepper { flex-wrap: wrap; gap: 12px; }
+      .step-connector { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Page header -->
+  <div class="page-hd">
+    <h1>Databricks App</h1>
+    <p>Run Datavant tokenization and token transformation in your Databricks environment.</p>
+  </div>
+
+  <!-- Stepper -->
+  <nav class="stepper" id="stepper">
+    <div class="step" onclick="switchTab('config')">
+      <div class="step-circle done" id="sc-config">✓</div>
+      <div class="step-body">
+        <span class="step-label">Configuration</span>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" onclick="switchTab('tokenize')">
+      <div class="step-circle idle" id="sc-tokenize">2</div>
+      <div class="step-body">
+        <span class="step-label">Tokenize</span>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" onclick="switchTab('transform')">
+      <div class="step-circle idle" id="sc-transform">3</div>
+      <div class="step-body">
+        <span class="step-label">Transform</span>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" onclick="switchTab('runtime')">
+      <div class="step-circle idle" id="sc-runtime">4</div>
+      <div class="step-body">
+        <span class="step-label">Runtime</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── TAB 1: Configuration ──────────────────────────── -->
+  <div class="tab-panel active" id="tab-config">
+
+    <!-- Spark processing job -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">bolt</span>
+        <span class="title">Spark processing job</span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label-block">
+            <div class="field-label-row">
+              <span class="field-label">Processing job ID</span>
+              <span class="field-required">*</span>
+            </div>
+            <span class="field-hint">This app runs only the job bound as the processing_job resource. The app service principal must have CAN_MANAGE_RUN on this job.</span>
+          </div>
+          <input class="input-text" type="text" value="321149536614645" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Datavant credentials -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">lock</span>
+        <span class="title">Datavant credentials</span>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Databricks secret scope</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">The Databricks secret scope where Datavant credentials are stored.</span>
+            </div>
+            <input class="input-text" type="text" value="prod-creds" />
+          </div>
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Databricks secret key</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">The key within the scope containing the Datavant credential JSON.</span>
+            </div>
+            <input class="input-text" type="text" placeholder="key-name" />
+          </div>
+        </div>
+        <div class="info-box blue">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.33" stroke="#2945f0" stroke-width="1.5"/><path d="M10 9v5" stroke="#2945f0" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.5" r="0.75" fill="#2945f0"/></svg>
+          <span>Credentials fetched from Databricks Secrets at runtime. PII and token encryption keys never leave your environment.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Databricks SQL datasource -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">table_chart</span>
+        <span class="title">Databricks SQL datasource</span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label-block">
+            <div class="field-label-row">
+              <span class="field-label">SQL warehouse</span>
+              <span class="field-required">*</span>
+            </div>
+            <span class="field-hint">The warehouse used to read input tables and write tokenized output.</span>
+          </div>
+          <div class="select-wrap">
+            <select class="input-select">
+              <option>Starter Warehouse (a98b39c59f21cc6e) — RUNNING</option>
+              <option>Pro Warehouse — STOPPED</option>
+            </select>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Input namespace</span>
+              </div>
+              <span class="field-hint">Default catalog.schema for input tables. Select a warehouse first.</span>
+            </div>
+            <div class="select-wrap">
+              <select class="input-select">
+                <option>Current warehouse default</option>
+                <option>main.ai_generated_testdata</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Output namespace</span>
+              </div>
+              <span class="field-hint">Default catalog.schema for output. If unset, qualified names are required.</span>
+            </div>
+            <div class="select-wrap">
+              <select class="input-select">
+                <option>Require fully qualified output table</option>
+                <option>main.tokenized_outputs</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <div class="footer-left">
+        <div class="saved-msg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#046338" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="#046338" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Configuration saved
+        </div>
+      </div>
+      <div class="footer-right">
+        <button class="btn btn-outline">Refresh options</button>
+        <button class="btn btn-filled" onclick="switchTab('tokenize')">Save &amp; continue →</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-config -->
+
+  <!-- ── TAB 2: Tokenize ───────────────────────────────── -->
+  <div class="tab-panel" id="tab-tokenize">
+
+    <div class="notice-bar">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.33" stroke="#2945f0" stroke-width="1.5"/><path d="M10 9v5" stroke="#2945f0" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.5" r="0.75" fill="#2945f0"/></svg>
+      <span>Last run complete. <a href="#">View Databricks run logs →</a></span>
+    </div>
+
+    <!-- Data card -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">table_chart</span>
+        <span class="title">Data</span>
+      </div>
+      <div class="card-body">
+        <div class="info-box blue">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.33" stroke="#2945f0" stroke-width="1.5"/><path d="M10 9v5" stroke="#2945f0" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.5" r="0.75" fill="#2945f0"/></svg>
+          <span>The input table must contain PII columns matching your tokenization config. The output table replaces PII with tokens — HIPAA de-identified under the Datavant Expert Determination.</span>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Input table</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">Must match the column layout expected by the selected config.</span>
+            </div>
+            <div class="select-wrap">
+              <select class="input-select">
+                <option>core_token_results (main.ai_generated_testdata)</option>
+                <option>patient_records (main.source_data)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Output table</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">Destination for tokenized output. Use a fully qualified name if output namespace is not set.</span>
+            </div>
+            <input class="input-text" type="text" value="test_outputs2" placeholder="catalog.schema.table" />
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <div class="field-group-label">Write mode<span class="field-required">*</span></div>
+          <div class="radio-group" id="wmode-tokenize">
+            <label class="radio-item">
+              <input type="radio" name="wmode-t" value="error" /> <span class="radio-label">error</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="wmode-t" value="overwrite" checked /> <span class="radio-label">overwrite</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="wmode-t" value="append" /> <span class="radio-label">append</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="wmode-t" value="ignore" /> <span class="radio-label">ignore</span>
+            </label>
+          </div>
+          <div class="field-hint" style="margin-top: 6px;">error — fail if exists · overwrite — replace all rows · append — add rows · ignore — skip if exists</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tokenization configuration -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">description</span>
+        <span class="title">Tokenization configuration</span>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Site</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">Your Datavant site name. Output tokens will be encrypted in this site's key: desktop_test_e2e_TOKEN_ENCRYPTION_KEY.</span>
+            </div>
+            <input class="input-text" type="text" value="desktop_test_e2e" />
+          </div>
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Config name</span>
+              </div>
+              <span class="field-hint">Name of the tokenization config in Datavant Connect. Specifies token designs, column layout, and output operations.</span>
+            </div>
+            <input class="input-text" type="text" value="databricks_core_tokens" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">menu</span>
+        <span class="title">Options</span>
+      </div>
+      <div class="card-body">
+        <div class="check-list">
+          <div class="check-row">
+            <input type="checkbox" id="t-skip-pre" />
+            <div>
+              <div class="check-label">Skip name preprocessing</div>
+              <div class="check-hint">Bypass first/last name standardization. Use only if your config applies custom preprocessing.</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <input type="checkbox" id="t-dis-reorder" />
+            <div>
+              <div class="check-label">Disable output reordering</div>
+              <div class="check-hint">Preserve the original row order of the input table in the output.</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <input type="checkbox" id="t-suppress" />
+            <div>
+              <div class="check-label">Suppress token errors</div>
+              <div class="check-hint">Do not raise an error when XXX-F00000 error tokens are produced due to missing or invalid PII.</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <input type="checkbox" id="t-summary" checked />
+            <div>
+              <div class="check-label">Show summary</div>
+              <div class="check-hint">Print token fill rates and row counts to Spark logs after the job completes.</div>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field" style="margin-top: 4px;">
+          <div class="field-label-block">
+            <div class="field-label-row">
+              <span class="field-label">Repartition value</span>
+            </div>
+            <span class="field-hint">Controls Spark parallelism. Tune to match your cluster size.</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+            <div class="num-stepper">
+              <button class="num-stepper-btn" onclick="stepVal('rep',−10)">−</button>
+              <input class="num-stepper-input" type="number" id="rep" value="100" min="1" step="10" />
+              <button class="num-stepper-btn" onclick="stepVal('rep',10)">+</button>
+            </div>
+            <span class="field-hint">Multiples of 10, or 1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-left">
+        <button class="btn btn-outline" onclick="switchTab('config')">← Back</button>
+      </div>
+      <div class="footer-right">
+        <button class="btn btn-outline">Save draft</button>
+        <button class="btn btn-run">▶ Run tokenize</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-tokenize -->
+
+  <!-- ── TAB 3: Transform ──────────────────────────────── -->
+  <div class="tab-panel" id="tab-transform">
+
+    <!-- Transform direction -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">swap_horiz</span>
+        <span class="title">Transform direction</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:12px; color:var(--color-dimmed); line-height:1.6; margin-bottom:4px;">
+          Token transformation re-encrypts tokens between sites to enable cross-organization data linkage. Choose your role in this data exchange.
+        </p>
+        <div class="dir-cards">
+          <div class="dir-card" onclick="selectDir(this)">
+            <div class="dir-card-hd">
+              <div class="dir-card-title">
+                <span class="icon" style="font-family:var(--font-icons)">send</span>
+                Send to partner
+              </div>
+              <input type="radio" name="xdir" value="send" />
+            </div>
+            <p>You are the data source. Convert your site-specific tokens to transit tokens so a partner can re-encrypt them into their site. Uses a transit key.</p>
+            <div class="dir-flow">
+              <span class="flow-node">your_site tokens</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-node">transit tokens</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-node">partner</span>
+            </div>
+          </div>
+          <div class="dir-card selected" onclick="selectDir(this)">
+            <div class="dir-card-hd">
+              <div class="dir-card-title">
+                <span class="icon" style="font-family:var(--font-icons)">move_to_inbox</span>
+                Receive from partner
+              </div>
+              <input type="radio" name="xdir" value="receive" checked />
+            </div>
+            <p>You are the data recipient. Convert inbound transit tokens into your site-specific tokens so they are linkable in your environment. Uses a connect key.</p>
+            <div class="dir-flow">
+              <span class="flow-node">transit tokens</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-node">your_site tokens</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-node">linkable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">table_chart</span>
+        <span class="title">Data</span>
+      </div>
+      <div class="card-body">
+        <div class="info-box blue">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.33" stroke="#2945f0" stroke-width="1.5"/><path d="M10 9v5" stroke="#2945f0" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.5" r="0.75" fill="#2945f0"/></svg>
+          <span>Configure a SQL warehouse in the Configuration tab to load available input tables.</span>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Output table</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">Destination for your site-specific tokens, linkable with your existing tokenized data.</span>
+            </div>
+            <input class="input-text" type="text" placeholder="catalog.schema.table_name" />
+          </div>
+          <div class="field">
+            <div class="field-group-label" style="margin-bottom:8px;">Write mode<span class="field-required">*</span></div>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="wmode-x" value="error" checked /> <span class="radio-label">error</span></label>
+              <label class="radio-item"><input type="radio" name="wmode-x" value="overwrite" /> <span class="radio-label">overwrite</span></label>
+              <label class="radio-item"><input type="radio" name="wmode-x" value="append" /> <span class="radio-label">append</span></label>
+              <label class="radio-item"><input type="radio" name="wmode-x" value="ignore" /> <span class="radio-label">ignore</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Site & key configuration -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">description</span>
+        <span class="title">Site &amp; key configuration</span>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Your site</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">Inbound transit tokens will be re-encrypted into this site's key: your_site_TOKEN_ENCRYPTION_KEY.</span>
+            </div>
+            <input class="input-text" type="text" placeholder="your-site-name" />
+          </div>
+          <div class="field">
+            <div class="field-label-block">
+              <div class="field-label-row">
+                <span class="field-label">Partner's origin site</span>
+                <span class="field-required">*</span>
+              </div>
+              <span class="field-hint">The site that created the transit tokens. Derives the transit key: partner_site-your_site_TOKEN_ENCRYPTION_KEY.</span>
+            </div>
+            <input class="input-text" type="text" placeholder="partner-site-name" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">menu</span>
+        <span class="title">Options</span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label-block">
+            <div class="field-label-row"><span class="field-label">Token columns</span></div>
+            <span class="field-hint">Columns containing tokens to transform. Leave empty to auto-detect all token columns (44-character strings ending in =).</span>
+          </div>
+          <input class="input-text" type="text" value="token_1, token_2, token_101" />
+        </div>
+        <div class="divider"></div>
+        <div class="check-list">
+          <div class="check-row">
+            <input type="checkbox" id="x-suppress" />
+            <div>
+              <div class="check-label">Suppress token errors</div>
+              <div class="check-hint">Ignore XXX-T00000 T-type errors produced when a token can't be transformed (e.g. wrong encryption key).</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <input type="checkbox" id="x-drop" />
+            <div>
+              <div class="check-label">Drop token error codes</div>
+              <div class="check-hint">Replace XXX-T00000 error tokens with nulls in the output table.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-left">
+        <button class="btn btn-outline" onclick="switchTab('tokenize')">← Back</button>
+      </div>
+      <div class="footer-right">
+        <button class="btn btn-outline">Save draft</button>
+        <button class="btn btn-run">▶ Run receive transform</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-transform -->
+
+  <!-- ── TAB 4: Runtime ────────────────────────────────── -->
+  <div class="tab-panel" id="tab-runtime">
+
+    <div class="info-box blue">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.33" stroke="#2945f0" stroke-width="1.5"/><path d="M10 9v5" stroke="#2945f0" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.5" r="0.75" fill="#2945f0"/></svg>
+      <span>SQL warehouse ID shows as not configured — set a warehouse in the Configuration tab to enable table browsing.</span>
+    </div>
+
+    <!-- Runtime environment -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="icon">desktop_windows</span>
+        <span class="title">Runtime environment</span>
+      </div>
+      <div style="padding: 0 0 0;">
+        <table class="rt-table" style="table-layout: fixed;">
+          <colgroup>
+            <col style="width: 68px;" />
+            <col style="width: 280px;" />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="padding-left: 20px;">#</th>
+              <th>Setting</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-n">0</td>
+              <td>Mode</td>
+              <td><span class="rt-tag">databricks</span></td>
+            </tr>
+            <tr>
+              <td class="col-n">1</td>
+              <td>Authorization</td>
+              <td><span class="rt-tag">viewer identity</span></td>
+            </tr>
+            <tr>
+              <td class="col-n">2</td>
+              <td>Python executable</td>
+              <td style="font-size:12px; color:var(--color-text);">.venv/bin/python</td>
+            </tr>
+            <tr>
+              <td class="col-n">3</td>
+              <td>SQL warehouse ID</td>
+              <td><span class="rt-tag warn">not configured</span></td>
+            </tr>
+            <tr>
+              <td class="col-n">4</td>
+              <td>SQL HTTP path</td>
+              <td><span class="rt-tag">derived from SQL warehouse ID</span></td>
+            </tr>
+            <tr>
+              <td class="col-n">5</td>
+              <td>Input namespace</td>
+              <td><span class="rt-tag">current warehouse default</span></td>
+            </tr>
+            <tr>
+              <td class="col-n">6</td>
+              <td>Output namespace</td>
+              <td><span class="rt-tag warn">not configured</span></td>
+            </tr>
+            <tr>
+              <td class="col-n">7</td>
+              <td>Processing job ID</td>
+              <td style="font-size:12px; color:var(--color-text);">321149536614645</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-left">
+        <button class="btn btn-outline" onclick="switchTab('transform')">← Back</button>
+      </div>
+      <div class="footer-right">
+        <button class="btn btn-outline">View Databricks logs ↗</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-runtime -->
+
+</div>
+
+<script>
+  const tabs = ['config','tokenize','transform','runtime'];
+
+  function switchTab(id) {
+    tabs.forEach((t, i) => {
+      const panel  = document.getElementById('tab-' + t);
+      const circle = document.getElementById('sc-' + t);
+      const idx    = tabs.indexOf(id);
+
+      panel.classList.toggle('active', t === id);
+
+      if (i < idx) {
+        circle.className = 'step-circle done';
+        circle.textContent = '✓';
+      } else if (t === id) {
+        circle.className = 'step-circle active';
+        circle.textContent = i === 0 ? '✓' : String(i + 1);
+      } else {
+        circle.className = 'step-circle idle';
+        circle.textContent = String(i + 1);
+      }
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function stepVal(id, delta) {
+    const el = document.getElementById(id);
+    el.value = Math.max(1, (parseInt(el.value) || 0) + delta);
+  }
+
+  function selectDir(card) {
+    document.querySelectorAll('.dir-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    const r = card.querySelector('input[type="radio"]');
+    if (r) r.checked = true;
+  }
+</script>
+</body>
+</html>
