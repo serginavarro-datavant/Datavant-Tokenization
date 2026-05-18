@@ -130,7 +130,11 @@
       </div>
       <div class="meta-item">
         <span class="meta-label">Design system</span>
-        <span class="meta-val">DART DS (datavant/dart)</span>
+        <span class="meta-val">DART DS · <a href="https://github.com/datavant/dart/tree/main" target="_blank">datavant/dart main ↗</a></span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">DS branch</span>
+        <span class="meta-val">main (active dev — NOT dart-v0)</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Prototype</span>
@@ -153,6 +157,105 @@
       <li><a href="#tab3">Tab 3 — Transform</a></li>
       <li><a href="#tab4">Tab 4 — Runtime</a></li>
     </ol>
+  </div>
+
+  <!-- ── DS Reference ─────────────────────────────────────── -->
+  <div class="global-section" id="ds-ref" style="margin-bottom:48px;">
+
+    <!-- Figma ↔ main branch alignment note -->
+    <div class="notes" style="margin-bottom:20px; background:#f0faf2; border-color:#65e59f; color:#046338;">
+      <strong>Figma DS library and datavant/dart main branch are built in parallel</strong>
+      The Figma Design System library and the <code style="font-family:monospace;font-size:11px;">datavant/dart</code> <strong>main</strong> branch are the canonical source of truth — they evolve together. When implementing any screen, use components from the <code style="font-family:monospace;font-size:11px;">main</code> branch, not <code style="font-family:monospace;font-size:11px;">dart-v0</code> (legacy). Install via AWS CodeArtifact: <code style="font-family:monospace;font-size:11px;">@datavant/dart</code>.
+    </div>
+
+    <h2>Design System Reference — main branch</h2>
+    <table class="comp-table" style="margin-bottom:16px;">
+      <thead>
+        <tr><th style="width:200px">Token</th><th style="width:200px">Semantic name (theme.css)</th><th style="width:140px">Resolved value</th><th>Usage</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="comp-name">Primary</td><td><span class="node-id">--surface-primary-filled-default</span></td><td><span class="tag blue">#2945f0</span></td><td>Filled buttons, active stepper circle, focus ring, selected card border</td></tr>
+        <tr><td class="comp-name">Primary muted</td><td><span class="node-id">--surface-primary-muted-default</span></td><td><span class="tag blue">#e7eafe</span></td><td>Alert default bg, tag blue bg, focus glow</td></tr>
+        <tr><td class="comp-name">Text default</td><td><span class="node-id">--text-on-base-default</span></td><td><span class="tag gray">#020202</span></td><td>Body text, labels, card titles</td></tr>
+        <tr><td class="comp-name">Text secondary</td><td><span class="node-id">--text-on-base-secondary-default</span></td><td><span class="tag gray">#606a78</span></td><td>Hint text, dimmed values, table header text</td></tr>
+        <tr><td class="comp-name">Border default</td><td><span class="node-id">--border-default</span></td><td><span class="tag gray">#c7ccd4</span></td><td>Input borders, card borders, dividers</td></tr>
+        <tr><td class="comp-name">Surface offset</td><td><span class="node-id">--surface-offset-default</span></td><td><span class="tag gray">#f9f9fb</span></td><td>Page background canvas</td></tr>
+        <tr><td class="comp-name">Success text</td><td><span class="node-id">--text-on-base-success-default</span></td><td><span class="tag green">#046338</span></td><td>Alert success text, "saved" confirmation</td></tr>
+        <tr><td class="comp-name">Success bg</td><td><span class="node-id">--surface-success-muted-default</span></td><td><span class="tag green">#f0faf2</span></td><td>Alert success background</td></tr>
+        <tr><td class="comp-name">Error text</td><td><span class="node-id">--text-on-base-error-default</span></td><td><span class="tag red">#de1212</span></td><td>Alert error text, required asterisk (*)</td></tr>
+        <tr><td class="comp-name">Warning bg</td><td><span class="node-id">--surface-warning-muted-default</span></td><td><span class="tag" style="background:#fdfaeb;color:#855000;border-color:#ffe045;">#fdfaeb</span></td><td>Warning tag / alert warning background</td></tr>
+      </tbody>
+    </table>
+
+    <table class="comp-table" style="margin-bottom:16px;">
+      <thead>
+        <tr><th style="width:200px">Token</th><th style="width:200px">System token (system.css)</th><th style="width:140px">Value</th><th>Usage</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="comp-name">Font</td><td><span class="node-id">--font-font-family-primary</span></td><td><span class="tag gray">Geist</span></td><td>All text — import via Google Fonts</td></tr>
+        <tr><td class="comp-name">Button / input radius</td><td><span class="node-id">--radius-md</span></td><td><span class="tag gray">6px (0.375rem)</span></td><td>Buttons, inputs, alerts — NOT pill-shaped in main branch</td></tr>
+        <tr><td class="comp-name">Space md</td><td><span class="node-id">--space-16</span></td><td><span class="tag gray">16px (1rem)</span></td><td>Card padding, button horizontal pad (md)</td></tr>
+        <tr><td class="comp-name">Space sm</td><td><span class="node-id">--space-12</span></td><td><span class="tag gray">12px (0.75rem)</span></td><td>Gap between form fields, button horizontal pad (sm)</td></tr>
+        <tr><td class="comp-name">Space xs</td><td><span class="node-id">--space-8</span></td><td><span class="tag gray">8px (0.5rem)</span></td><td>Label → input gap, inline icon gap</td></tr>
+      </tbody>
+    </table>
+
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:260px">Main branch API</th><th>Key difference from dart-v0</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="comp-name">Button</td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default | destructive</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">filled | outline | subtle | white | transparent</span></div>
+              <div class="prop"><span class="prop-key">size:</span> <span class="prop-val">xs | sm | md | lg</span></div>
+            </div>
+          </td>
+          <td>Radius is <strong>6px</strong>, not 1000px pill. <code style="font-family:monospace;font-size:11px;">intent</code> is a new prop — use <code style="font-family:monospace;font-size:11px;">intent="default"</code> for standard buttons.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Alert</td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default | success | warning | error</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">contained | notContained</span></div>
+            </div>
+          </td>
+          <td>In dart-v0 this was: neutral / info / positive / caution / negative. Main branch uses <code style="font-family:monospace;font-size:11px;">intent="default"</code> for blue info-style alerts.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">TextInput</td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">label:</span> <span class="prop-val">string</span></div>
+              <div class="prop"><span class="prop-key">description:</span> <span class="prop-val">hint text above input</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">boolean — renders red asterisk</span></div>
+              <div class="prop"><span class="prop-key">error:</span> <span class="prop-val">string — validation message</span></div>
+            </div>
+          </td>
+          <td>Hint text is the <code style="font-family:monospace;font-size:11px;">description</code> prop, not a separate Label component. Order: label → description → input → error.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Stepper</td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">active:</span> <span class="prop-val">number (0-indexed)</span></div>
+              <div class="prop"><span class="prop-key">Stepper.Step:</span> <span class="prop-val">label, description</span></div>
+              <div class="prop"><span class="prop-key">completedIcon:</span> <span class="prop-val">✓ (default)</span></div>
+            </div>
+          </td>
+          <td>Native component in main branch — no custom implementation needed. Completed + active = <strong>dv-blue-600</strong> fill.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Icons</td>
+          <td><span class="prop-val">@tabler/icons-react</span></td>
+          <td>NOT Material Icons, NOT Lucide. Import: <code style="font-family:monospace;font-size:11px;">import &#123; IconBolt &#125; from '@tabler/icons-react'</code></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- ── Global ──────────────────────────────────────────── -->
@@ -281,7 +384,7 @@
           </td>
           <td>
             <div class="prop-list">
-              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
               <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
               <div class="prop"><span class="prop-key">bg:</span> <span class="prop-val">#e7eafe</span></div>
             </div>
@@ -345,7 +448,7 @@
           </td>
           <td>
             <div class="prop-list">
-              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Success (green)</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">success</span> <span class="tag green" style="font-size:9px;">green</span></div>
               <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Circle Check</span></div>
               <div class="prop"><span class="prop-key">text:</span> <span class="prop-val">"Configuration saved"</span></div>
             </div>
@@ -379,7 +482,7 @@
           </td>
           <td>
             <div class="prop-list">
-              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Success (green)</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">success</span> <span class="tag green" style="font-size:9px;">green</span></div>
               <div class="prop"><span class="prop-key">contains:</span> <span class="prop-val">link "View Databricks run logs →"</span></div>
             </div>
           </td>
@@ -402,7 +505,7 @@
           </td>
           <td>
             <div class="prop-list">
-              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
               <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
             </div>
           </td>
@@ -553,7 +656,7 @@
           </td>
           <td>
             <div class="prop-list">
-              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
             </div>
           </td>
           <td>"Configure a SQL warehouse in the Configuration tab to load available input tables."</td>
@@ -675,7 +778,7 @@
           </td>
           <td>
             <div class="prop-list">
-              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
               <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
             </div>
           </td>
