@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev Handoff — Databricks App (DART DS)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary:   #2945f0;
+      --text:      #020202;
+      --dimmed:    #606a78;
+      --border:    #c7ccd4;
+      --bg:        #f9f9fb;
+      --bg-white:  #ffffff;
+      --bg-mild:   #f2f3f8;
+      --success:   #046338;
+      --tag-blue-bg:  #e7eafe;
+      --tag-blue-txt: #2945f0;
+      --tag-green-bg: #ecfdf5;
+      --tag-green-txt:#046338;
+      --tag-gray-bg:  #f2f3f8;
+      --tag-gray-txt: #606a78;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Geist', sans-serif; background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.5; }
+
+    /* ── Shell ── */
+    .shell { max-width: 960px; margin: 0 auto; padding: 48px 32px 80px; }
+
+    /* ── Header ── */
+    .doc-header { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .doc-header h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+    .doc-header p  { color: var(--dimmed); font-size: 13px; }
+    .meta-row { display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+    .meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--dimmed); }
+    .meta-val   { font-size: 12px; color: var(--text); }
+    .meta-val a { color: var(--primary); text-decoration: none; }
+    .meta-val a:hover { text-decoration: underline; }
+
+    /* ── TOC ── */
+    .toc { background: var(--bg-white); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 40px; }
+    .toc h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--dimmed); margin-bottom: 12px; }
+    .toc ol  { list-style: none; display: flex; flex-direction: column; gap: 6px; counter-reset: toc; }
+    .toc li  { counter-increment: toc; display: flex; align-items: center; gap: 10px; }
+    .toc li::before { content: counter(toc); font-size: 10px; font-weight: 600; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .toc a   { color: var(--text); font-size: 13px; font-weight: 500; text-decoration: none; }
+    .toc a:hover { color: var(--primary); }
+
+    /* ── Global components section ── */
+    .global-section { margin-bottom: 40px; }
+    .global-section h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--dimmed); margin-bottom: 16px; }
+
+    /* ── Tab section ── */
+    .tab-section { margin-bottom: 48px; }
+    .tab-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary);
+    }
+    .tab-header h2 { font-size: 18px; font-weight: 600; }
+    .tab-header .step-badge {
+      font-size: 11px; font-weight: 600;
+      background: var(--primary); color: #fff;
+      padding: 2px 10px; border-radius: 999px;
+    }
+    .tab-desc { color: var(--dimmed); font-size: 12px; margin-bottom: 20px; }
+
+    /* ── Component table ── */
+    .comp-table { width: 100%; border-collapse: collapse; background: var(--bg-white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+    .comp-table th {
+      text-align: left; font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: var(--dimmed); background: var(--bg-mild);
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+    }
+    .comp-table td { padding: 12px 16px; border-bottom: 1px solid var(--bg-mild); vertical-align: top; font-size: 12px; }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table tr:hover td { background: #fafafe; }
+
+    /* Component name */
+    .comp-name { font-weight: 600; color: var(--text); white-space: nowrap; }
+    .comp-usage { color: var(--dimmed); font-size: 11px; margin-top: 2px; }
+
+    /* Tags */
+    .tag {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 4px;
+      font-size: 10px; font-weight: 600;
+      white-space: nowrap; margin: 1px 2px 1px 0;
+      border: 1px solid;
+    }
+    .tag.blue  { background: var(--tag-blue-bg);  color: var(--tag-blue-txt);  border-color: #d6daff; }
+    .tag.green { background: var(--tag-green-bg); color: var(--tag-green-txt); border-color: #a7f3d0; }
+    .tag.gray  { background: var(--tag-gray-bg);  color: var(--tag-gray-txt);  border-color: var(--border); }
+    .tag.red   { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+
+    /* Props list */
+    .prop-list { display: flex; flex-direction: column; gap: 3px; }
+    .prop { font-size: 11px; }
+    .prop-key { font-weight: 600; color: var(--text); }
+    .prop-val { color: var(--dimmed); font-family: monospace; font-size: 11px; }
+
+    /* Instance ID */
+    .node-id { font-family: monospace; font-size: 10px; color: var(--dimmed); }
+
+    /* ── Notes box ── */
+    .notes { background: var(--tag-blue-bg); border: 1px solid #d6daff; border-radius: 6px; padding: 12px 16px; font-size: 12px; color: var(--primary); margin-top: 8px; }
+    .notes strong { font-weight: 600; display: block; margin-bottom: 4px; }
+
+    /* ── Section divider ── */
+    .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--dimmed); margin: 20px 0 10px; }
+
+    /* ── Footer ── */
+    footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dimmed); display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Doc header ──────────────────────────────────────── -->
+  <div class="doc-header">
+    <h1>Dev Handoff — Databricks App</h1>
+    <p>Component inventory per tab · DART Design System · Agile format</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Figma source</span>
+        <span class="meta-val"><a href="https://www.figma.com/design/5S8JojA0d6pe1Tapy5AUlf/Databricks-App-%E2%80%94-UI-Screens?node-id=39-36" target="_blank">Databricks App — UI Screens · DART DS Adaptation ↗</a></span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Design system</span>
+        <span class="meta-val">DART DS (datavant/dart)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Prototype</span>
+        <span class="meta-val"><a href="index.html">Live prototype ↗</a></span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Last updated</span>
+        <span class="meta-val">2026-05-18</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOC ─────────────────────────────────────────────── -->
+  <div class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#global">Global components (all tabs)</a></li>
+      <li><a href="#tab1">Tab 1 — Configuration</a></li>
+      <li><a href="#tab2">Tab 2 — Tokenize</a></li>
+      <li><a href="#tab3">Tab 3 — Transform</a></li>
+      <li><a href="#tab4">Tab 4 — Runtime</a></li>
+    </ol>
+  </div>
+
+  <!-- ── Global ──────────────────────────────────────────── -->
+  <div class="global-section" id="global">
+    <h2>Global — present on every tab</h2>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th style="width:200px">Component</th>
+          <th style="width:180px">Variant / Props</th>
+          <th>Usage</th>
+          <th style="width:120px">Node ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Stepper</div>
+            <div class="comp-usage">Step-based navigation bar</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">steps:</span> <span class="prop-val">4</span></div>
+              <div class="prop"><span class="prop-key">active step:</span> <span class="prop-val">varies per tab</span></div>
+              <div class="prop"><span class="prop-key">completed:</span> <span class="prop-val">filled blue circle + ✓</span></div>
+              <div class="prop"><span class="prop-key">current:</span> <span class="prop-val">filled blue circle + number</span></div>
+              <div class="prop"><span class="prop-key">upcoming:</span> <span class="prop-val">outlined circle + number</span></div>
+            </div>
+          </td>
+          <td>Top of every tab. Clicking a step navigates to that tab.</td>
+          <td><span class="node-id">52:4267 (T1)<br/>53:1849 (T2)<br/>81:659 (T3)<br/>85:779 (T4)</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Button</div>
+            <div class="comp-usage">Outline variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">Outline</span></div>
+              <div class="prop"><span class="prop-key">size:</span> <span class="prop-val">sm</span></div>
+              <div class="prop"><span class="prop-key">state:</span> <span class="prop-val">Default</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Default</span></div>
+            </div>
+          </td>
+          <td>Secondary actions — "← Back", "Refresh options", "Save draft", "View Databricks logs ↗"</td>
+          <td><span class="node-id">52:3951<br/>53:2468</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Button</div>
+            <div class="comp-usage">Filled variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">Filled</span></div>
+              <div class="prop"><span class="prop-key">size:</span> <span class="prop-val">sm</span></div>
+              <div class="prop"><span class="prop-key">state:</span> <span class="prop-val">Default</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Default</span></div>
+            </div>
+          </td>
+          <td>Primary CTA — "Save &amp; continue →", "▶ Run tokenize", "▶ Run receive transform"</td>
+          <td><span class="node-id">52:3964<br/>53:2476</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Tab 1 ────────────────────────────────────────────── -->
+  <div class="tab-section" id="tab1">
+    <div class="tab-header">
+      <h2>Tab 1 — Configuration</h2>
+      <span class="step-badge">Step 1</span>
+    </div>
+    <p class="tab-desc">Initial setup screen. User configures the Spark job, Datavant credentials, and SQL datasource. Figma node: <span class="node-id">52:2</span></p>
+
+    <div class="section-label">Card: Spark processing job</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">+ Label component</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">label:</span> <span class="prop-val">"Processing job ID"</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">true (asterisk *)</span></div>
+              <div class="prop"><span class="prop-key">hint:</span> <span class="prop-val">below label, above input</span></div>
+              <div class="prop"><span class="prop-key">placeholder:</span> <span class="prop-val">"321149536614645"</span></div>
+            </div>
+          </td>
+          <td>Single text field for the Databricks job ID.</td>
+          <td><span class="node-id">52:3984</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Datavant credentials</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">2 instances, side by side</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">true (both)</span></div>
+              <div class="prop"><span class="prop-key">layout:</span> <span class="prop-val">50% / 50% row</span></div>
+            </div>
+          </td>
+          <td>"Databricks secret scope" + "Databricks secret key" — side by side in a 2-col row.</td>
+          <td><span class="node-id">52:4056<br/>52:4084</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Alert / Banner</div>
+            <div class="comp-usage">Info variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
+              <div class="prop"><span class="prop-key">bg:</span> <span class="prop-val">#e7eafe</span></div>
+            </div>
+          </td>
+          <td>Security note: "Credentials fetched from Databricks Secrets at runtime…"</td>
+          <td><span class="node-id">63:870</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Databricks SQL datasource</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">Select / Dropdown variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">label:</span> <span class="prop-val">"SQL warehouse"</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">true</span></div>
+              <div class="prop"><span class="prop-key">right icon:</span> <span class="prop-val">Arrows/Chevron Down</span></div>
+              <div class="prop"><span class="prop-key">width:</span> <span class="prop-val">full (716px)</span></div>
+            </div>
+          </td>
+          <td>Full-width warehouse selector. Shows running status inline.</td>
+          <td><span class="node-id">52:4112</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">Select / Dropdown variant × 2</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">false (optional)</span></div>
+              <div class="prop"><span class="prop-key">layout:</span> <span class="prop-val">50% / 50% row</span></div>
+              <div class="prop"><span class="prop-key">right icon:</span> <span class="prop-val">Arrows/Chevron Down</span></div>
+            </div>
+          </td>
+          <td>"Input namespace" + "Output namespace" — optional dropdowns in a 2-col row below a divider.</td>
+          <td><span class="node-id">52:4140<br/>52:4168</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Footer</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Alert / Banner</div>
+            <div class="comp-usage">Success / inline variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Success (green)</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Circle Check</span></div>
+              <div class="prop"><span class="prop-key">text:</span> <span class="prop-val">"Configuration saved"</span></div>
+            </div>
+          </td>
+          <td>Inline confirmation in footer left — no background, just icon + green text.</td>
+          <td><span class="node-id">63:2795</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="notes"><strong>Notes for dev</strong>Label hint text renders <em>above</em> the input (label → hint → field), not below. Required fields use a red asterisk (*) inline with the label — no badge component.</div>
+  </div>
+
+  <!-- ── Tab 2 ────────────────────────────────────────────── -->
+  <div class="tab-section" id="tab2">
+    <div class="tab-header">
+      <h2>Tab 2 — Tokenize</h2>
+      <span class="step-badge">Step 2</span>
+    </div>
+    <p class="tab-desc">Configure and run the tokenization job. Includes data source, tokenization config, and advanced options. Figma node: <span class="node-id">53:204</span></p>
+
+    <div class="section-label">Status notice (top)</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Alert / Banner</div>
+            <div class="comp-usage">Success inline</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Success (green)</span></div>
+              <div class="prop"><span class="prop-key">contains:</span> <span class="prop-val">link "View Databricks run logs →"</span></div>
+            </div>
+          </td>
+          <td>Full-width notice bar: "Last run complete. View Databricks run logs →"</td>
+          <td><span class="node-id">63:881</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Data</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Alert / Banner</div>
+            <div class="comp-usage">Info variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
+            </div>
+          </td>
+          <td>HIPAA de-identification note at top of Data card.</td>
+          <td><span class="node-id">63:797</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">Select variant + Text variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">true (both)</span></div>
+              <div class="prop"><span class="prop-key">layout:</span> <span class="prop-val">50% / 50% row</span></div>
+            </div>
+          </td>
+          <td>"Input table" (select) + "Output table" (text input) in a 2-col row.</td>
+          <td><span class="node-id">53:1930<br/>53:2000</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Radio Group</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">options:</span> <span class="prop-val">error, overwrite, append, ignore</span></div>
+              <div class="prop"><span class="prop-key">default:</span> <span class="prop-val">overwrite</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">true</span></div>
+              <div class="prop"><span class="prop-key">layout:</span> <span class="prop-val">horizontal</span></div>
+            </div>
+          </td>
+          <td>Write mode selector. Below a divider, full width.</td>
+          <td><span class="node-id">63:2083</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Tokenization configuration</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">Text variant × 2</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">Site:</span> <span class="prop-val">required</span></div>
+              <div class="prop"><span class="prop-key">Config name:</span> <span class="prop-val">optional</span></div>
+              <div class="prop"><span class="prop-key">layout:</span> <span class="prop-val">50% / 50% row</span></div>
+            </div>
+          </td>
+          <td>"Site" (required) + "Config name" (optional) — 2-col row.</td>
+          <td><span class="node-id">53:2028<br/>53:2056</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Options</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Checkbox</div>
+            <div class="comp-usage">4 instances in a list</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">Skip name preprocessing:</span> <span class="prop-val">unchecked</span></div>
+              <div class="prop"><span class="prop-key">Disable output reordering:</span> <span class="prop-val">unchecked</span></div>
+              <div class="prop"><span class="prop-key">Suppress token errors:</span> <span class="prop-val">unchecked</span></div>
+              <div class="prop"><span class="prop-key">Show summary:</span> <span class="prop-val">checked (default)</span></div>
+            </div>
+          </td>
+          <td>Vertical checkbox list, each row separated by a 1px divider. Each item has a label + helper text.</td>
+          <td><span class="node-id">63:2467<br/>63:2517<br/>63:2575<br/>63:2565</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Number Stepper</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">label:</span> <span class="prop-val">"Repartition value"</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">false</span></div>
+              <div class="prop"><span class="prop-key">default:</span> <span class="prop-val">100</span></div>
+              <div class="prop"><span class="prop-key">step:</span> <span class="prop-val">10 (or 1)</span></div>
+            </div>
+          </td>
+          <td>−/+ stepper below the checkbox list, after a divider. Controls Spark parallelism.</td>
+          <td><span class="node-id">53:330</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="notes"><strong>Notes for dev</strong>"Show summary" checkbox is <strong>checked by default</strong>. All others unchecked. Stepper accepts multiples of 10, or 1.</div>
+  </div>
+
+  <!-- ── Tab 3 ────────────────────────────────────────────── -->
+  <div class="tab-section" id="tab3">
+    <div class="tab-header">
+      <h2>Tab 3 — Transform</h2>
+      <span class="step-badge">Step 3</span>
+    </div>
+    <p class="tab-desc">Configure and run token transformation between sites. Direction selection, data config, site keys, and options. Figma node: <span class="node-id">81:503</span></p>
+
+    <div class="section-label">Card: Transform direction</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Direction Card</div>
+            <div class="comp-usage">Custom pattern · 2 instances</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">type:</span> <span class="prop-val">Selectable card with Radio</span></div>
+              <div class="prop"><span class="prop-key">selected default:</span> <span class="prop-val">"Receive from partner"</span></div>
+              <div class="prop"><span class="prop-key">layout:</span> <span class="prop-val">50% / 50% row</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">send / move_to_inbox</span></div>
+            </div>
+          </td>
+          <td>Each card contains: title + icon, body text, inline token flow diagram, and a radio button. Selected state = primary border + shadow.</td>
+          <td><span class="node-id">81:534<br/>81:549</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Data</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Alert / Banner</div>
+            <div class="comp-usage">Info variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+            </div>
+          </td>
+          <td>"Configure a SQL warehouse in the Configuration tab to load available input tables."</td>
+          <td><span class="node-id">63:2637</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">Text variant</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">label:</span> <span class="prop-val">"Output table"</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">true</span></div>
+            </div>
+          </td>
+          <td>Output table field — 50% width, alongside Write mode radio group.</td>
+          <td><span class="node-id">81:764</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Radio Group</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">options:</span> <span class="prop-val">error, overwrite, append, ignore</span></div>
+              <div class="prop"><span class="prop-key">default:</span> <span class="prop-val">error</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">true</span></div>
+            </div>
+          </td>
+          <td>Write mode — 50% width, alongside Output table.</td>
+          <td><span class="node-id">63:2691</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Site &amp; key configuration</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">Text variant × 2</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">Your site:</span> <span class="prop-val">required</span></div>
+              <div class="prop"><span class="prop-key">Partner's origin site:</span> <span class="prop-val">required</span></div>
+              <div class="prop"><span class="prop-key">layout:</span> <span class="prop-val">50% / 50% row</span></div>
+            </div>
+          </td>
+          <td>Both fields required. Drive the transit key derivation logic.</td>
+          <td><span class="node-id">81:842<br/>81:870</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Options</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Text Input</div>
+            <div class="comp-usage">Text variant · full width</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">label:</span> <span class="prop-val">"Token columns"</span></div>
+              <div class="prop"><span class="prop-key">required:</span> <span class="prop-val">false</span></div>
+              <div class="prop"><span class="prop-key">placeholder:</span> <span class="prop-val">"token_1, token_2, …"</span></div>
+            </div>
+          </td>
+          <td>Optional comma-separated column names. Leave empty to auto-detect.</td>
+          <td><span class="node-id">81:942</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Checkbox</div>
+            <div class="comp-usage">2 instances</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">Suppress token errors:</span> <span class="prop-val">unchecked</span></div>
+              <div class="prop"><span class="prop-key">Drop token error codes:</span> <span class="prop-val">unchecked</span></div>
+            </div>
+          </td>
+          <td>Below a divider. Both unchecked by default.</td>
+          <td><span class="node-id">63:2736<br/>63:2726</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="notes"><strong>Notes for dev</strong>Direction Cards are a <strong>custom pattern</strong> — no direct DS component equivalent. Implement as a selectable card with an embedded radio input. Selected state: <span class="prop-val">border: 1px solid #2945f0 + box-shadow: 0 0 0 3px rgba(41,69,240,.12)</span>.</div>
+  </div>
+
+  <!-- ── Tab 4 ────────────────────────────────────────────── -->
+  <div class="tab-section" id="tab4">
+    <div class="tab-header">
+      <h2>Tab 4 — Runtime</h2>
+      <span class="step-badge">Step 4</span>
+    </div>
+    <p class="tab-desc">Read-only environment summary. Shows resolved runtime settings for the current session. Figma node: <span class="node-id">85:662</span></p>
+
+    <div class="section-label">Status notice (top)</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Alert / Banner</div>
+            <div class="comp-usage">Info variant · full width</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">Info (blue)</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
+            </div>
+          </td>
+          <td>"SQL warehouse ID shows as not configured — set a warehouse in the Configuration tab…"</td>
+          <td><span class="node-id">63:2770</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Card: Runtime environment</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th style="width:200px">Component</th><th style="width:180px">Variant / Props</th><th>Usage</th><th style="width:120px">Node ID</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="comp-name">Table Header Item</div>
+            <div class="comp-usage">3 instances</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">columns:</span> <span class="prop-val">#, Setting, Value</span></div>
+              <div class="prop"><span class="prop-key">col widths:</span> <span class="prop-val">50px / 311px / 400px</span></div>
+            </div>
+          </td>
+          <td>Table header row for the runtime settings table.</td>
+          <td><span class="node-id">63:2914<br/>63:5759<br/>63:5749</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Table Item</div>
+            <div class="comp-usage">8 rows × 3 columns</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">rows:</span> <span class="prop-val">0–7</span></div>
+              <div class="prop"><span class="prop-key">Value cell:</span> <span class="prop-val">Badge/Tag or plain text</span></div>
+            </div>
+          </td>
+          <td>Each row is a runtime key-value pair. Value column uses Badge/Tag for enum values, plain text for free-form values.</td>
+          <td><span class="node-id">63:5727+</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="comp-name">Badge / Tag</div>
+            <div class="comp-usage">Inline in Value column</div>
+          </td>
+          <td>
+            <div class="prop-list">
+              <div class="prop"><span class="prop-key">databricks:</span> <span class="prop-val">gray tag</span></div>
+              <div class="prop"><span class="prop-key">viewer identity:</span> <span class="prop-val">gray tag</span></div>
+              <div class="prop"><span class="prop-key">not configured:</span> <span class="prop-val">amber/warning tag</span></div>
+              <div class="prop"><span class="prop-key">derived from…:</span> <span class="prop-val">gray tag</span></div>
+            </div>
+          </td>
+          <td>Status tags in the Value column. "not configured" uses warning/amber styling to signal action needed.</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="notes"><strong>Notes for dev</strong>This tab is <strong>read-only</strong> — no editable inputs. The runtime table is purely informational. "not configured" rows (SQL warehouse ID, Output namespace) should be visually distinct — use warning/amber badge variant. Plain text values (.venv/bin/python, job ID) render without a badge.</div>
+  </div>
+
+  <footer>
+    <span>Databricks App · DART DS Adaptation · Datavant</span>
+    <span>Generated 2026-05-18 · <a href="https://www.figma.com/design/5S8JojA0d6pe1Tapy5AUlf" style="color:var(--primary)">Figma source ↗</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
