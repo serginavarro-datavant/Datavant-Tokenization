@@ -285,7 +285,7 @@
               <div class="prop"><span class="prop-key">upcoming:</span> <span class="prop-val">outlined circle + number</span></div>
             </div>
           </td>
-          <td>Top of every tab. Clicking a step navigates to that tab.</td>
+          <td>Top of every tab. Clicking a step navigates to that tab. Use native <code style="font-family:monospace;font-size:11px;">&lt;Stepper&gt;</code> from <code style="font-family:monospace;font-size:11px;">@datavant/dart</code> main — native component, no custom implementation. Completed + active circles both use dv-blue-600 (#2945f0).</td>
           <td><span class="node-id">52:4267 (T1)<br/>53:1849 (T2)<br/>81:659 (T3)<br/>85:779 (T4)</span></td>
         </tr>
         <tr>
@@ -380,13 +380,14 @@
         <tr>
           <td>
             <div class="comp-name">Alert / Banner</div>
-            <div class="comp-usage">Info variant</div>
+            <div class="comp-usage">Default · contained</div>
           </td>
           <td>
             <div class="prop-list">
               <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
-              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
-              <div class="prop"><span class="prop-key">bg:</span> <span class="prop-val">#e7eafe</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">contained</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">Tabler: IconInfoCircle</span></div>
+              <div class="prop"><span class="prop-key">bg:</span> <span class="prop-val">#e7eafe (dv-blue-100)</span></div>
             </div>
           </td>
           <td>Security note: "Credentials fetched from Databricks Secrets at runtime…"</td>
@@ -444,16 +445,17 @@
         <tr>
           <td>
             <div class="comp-name">Alert / Banner</div>
-            <div class="comp-usage">Success / inline variant</div>
+            <div class="comp-usage">Success · notContained</div>
           </td>
           <td>
             <div class="prop-list">
               <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">success</span> <span class="tag green" style="font-size:9px;">green</span></div>
-              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Circle Check</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">notContained</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">Tabler: IconCircleCheck</span></div>
               <div class="prop"><span class="prop-key">text:</span> <span class="prop-val">"Configuration saved"</span></div>
             </div>
           </td>
-          <td>Inline confirmation in footer left — no background, just icon + green text.</td>
+          <td>Inline confirmation in footer left — <code style="font-family:monospace;font-size:11px;">notContained</code> = transparent bg, no border, just icon + green text (#046338).</td>
           <td><span class="node-id">63:2795</span></td>
         </tr>
       </tbody>
@@ -478,11 +480,12 @@
         <tr>
           <td>
             <div class="comp-name">Alert / Banner</div>
-            <div class="comp-usage">Success inline</div>
+            <div class="comp-usage">Default (info) variant · full width</div>
           </td>
           <td>
             <div class="prop-list">
-              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">success</span> <span class="tag green" style="font-size:9px;">green</span></div>
+              <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">contained</span></div>
               <div class="prop"><span class="prop-key">contains:</span> <span class="prop-val">link "View Databricks run logs →"</span></div>
             </div>
           </td>
@@ -501,12 +504,13 @@
         <tr>
           <td>
             <div class="comp-name">Alert / Banner</div>
-            <div class="comp-usage">Info variant</div>
+            <div class="comp-usage">Default · contained</div>
           </td>
           <td>
             <div class="prop-list">
               <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
-              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">contained</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">Tabler: IconInfoCircle</span></div>
             </div>
           </td>
           <td>HIPAA de-identification note at top of Data card.</td>
@@ -652,11 +656,13 @@
         <tr>
           <td>
             <div class="comp-name">Alert / Banner</div>
-            <div class="comp-usage">Info variant</div>
+            <div class="comp-usage">Default · contained</div>
           </td>
           <td>
             <div class="prop-list">
               <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">contained</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">Tabler: IconInfoCircle</span></div>
             </div>
           </td>
           <td>"Configure a SQL warehouse in the Configuration tab to load available input tables."</td>
@@ -774,12 +780,13 @@
         <tr>
           <td>
             <div class="comp-name">Alert / Banner</div>
-            <div class="comp-usage">Info variant · full width</div>
+            <div class="comp-usage">Default · contained · full width</div>
           </td>
           <td>
             <div class="prop-list">
               <div class="prop"><span class="prop-key">intent:</span> <span class="prop-val">default</span> <span class="tag blue" style="font-size:9px;">blue</span></div>
-              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">System/Info Circle</span></div>
+              <div class="prop"><span class="prop-key">variant:</span> <span class="prop-val">contained</span></div>
+              <div class="prop"><span class="prop-key">icon:</span> <span class="prop-val">Tabler: IconInfoCircle</span></div>
             </div>
           </td>
           <td>"SQL warehouse ID shows as not configured — set a warehouse in the Configuration tab…"</td>
