@@ -1260,13 +1260,48 @@
 <style>
   /* Back-to-landing bar (GitHub Pages navigation) */
   .cb-topbar{position:fixed;top:0;left:0;right:0;height:40px;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#1F2D3D;color:#cbd5e1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:12px}
-  .cb-topbar a{color:#fff;font-weight:600;text-decoration:none}
-  .cb-topbar a:hover{text-decoration:underline}
+  .cb-topbar a.cb-home{color:#fff;font-weight:600;text-decoration:none}
+  .cb-topbar a.cb-home:hover{text-decoration:underline}
   .cb-topbar .cb-where{color:#94a3b8;font-weight:600}
+  .cb-tools{display:flex;align-items:center;gap:8px}
+  .cb-tbtn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);color:#e2e8f0;border:1px solid rgba(255,255,255,.16);border-radius:7px;padding:5px 10px;font:600 12px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer}
+  .cb-tbtn:hover{background:rgba(255,255,255,.18);color:#fff}
+  .cb-tbtn.on{background:#2B6CB0;border-color:#2B6CB0;color:#fff}
+  .cb-tbtn #cbCount{background:rgba(255,255,255,.28);border-radius:10px;padding:0 6px;font-size:11px}
   body{padding-top:40px}
   .sidebar{top:40px;height:calc(100vh - 40px)}
+  /* Comment layer */
+  body.cb-adding{cursor:crosshair}
+  #cb-layer{position:absolute;top:0;left:0;width:100%;height:0;z-index:55;pointer-events:none}
+  .cb-pin{position:absolute;transform:translate(-50%,-100%);min-width:24px;height:24px;border-radius:50% 50% 50% 3px;background:#2B6CB0;color:#fff;font:700 12px/24px -apple-system,Segoe UI,Roboto,Arial,sans-serif;text-align:center;box-shadow:0 2px 7px rgba(0,0,0,.32);cursor:pointer;pointer-events:auto;border:2px solid #fff}
+  .cb-pop{position:absolute;transform:translate(-50%,8px);z-index:80;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.2);padding:10px;width:248px;pointer-events:auto;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .cb-pop textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:6px;padding:6px;font-size:13px;resize:vertical;min-height:56px;font-family:inherit}
+  .cb-pop-actions{display:flex;justify-content:space-between;margin-top:8px}
+  .cb-pop-actions button{font:600 12px/1 -apple-system,Segoe UI,Roboto,Arial,sans-serif;border-radius:6px;padding:6px 11px;cursor:pointer;border:1px solid transparent}
+  .cb-save{background:#2B6CB0;color:#fff}
+  .cb-del{background:#fff;color:#B42318;border-color:#f3c0bb}
+  .cb-modal{position:fixed;inset:0;z-index:300;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center}
+  .cb-modal.open{display:flex}
+  .cb-modal-card{background:#fff;border-radius:12px;width:min(560px,92vw);max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .cb-modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0}
+  .cb-modal-head h3{margin:0;font-size:16px;color:#1F2D3D}
+  .cb-modal-body{padding:6px 0;overflow:auto}
+  .cb-citem{display:flex;gap:10px;padding:10px 18px;border-bottom:1px solid #f1f5f9;cursor:pointer}
+  .cb-citem:hover{background:#f1f5f9}
+  .cb-cnum{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#2B6CB0;color:#fff;font:700 11px/22px -apple-system,Segoe UI,Roboto,Arial,sans-serif;text-align:center}
+  .cb-ctext{font-size:13px;color:#1F2D3D}
+  .cb-cmeta{font-size:11px;color:#64748b;margin-top:2px}
+  .cb-modal-foot{padding:12px 18px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 </style>
-<div class="cb-topbar"><a href="index.html">&#8592; Configuration Builder</a><span class="cb-where">Prototype</span></div>
+<div class="cb-topbar">
+  <a class="cb-home" href="index.html">&#8592; Configuration Builder</a>
+  <div class="cb-tools">
+    <button id="cbAddBtn" class="cb-tbtn" type="button" onclick="cbToggleAdd()">Comment</button>
+    <button id="cbShowBtn" class="cb-tbtn" type="button" onclick="cbToggleShow()">Hide</button>
+    <button class="cb-tbtn" type="button" onclick="cbOpenAll()">All <span id="cbCount">0</span></button>
+    <span class="cb-where">Prototype</span>
+  </div>
+</div>
 <div class="page-shell">
 
   <!-- ══ SIDEBAR ══ -->
@@ -5458,6 +5493,114 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     }
     closeTokenModal();
   }
+</script>
+
+<!-- ══ Comment layer (local markup; persists in this browser via localStorage) ══ -->
+<div class="cb-modal" id="cb-modal" onclick="if(event.target===this)cbCloseAll()">
+  <div class="cb-modal-card">
+    <div class="cb-modal-head"><h3>Comments</h3><button class="cb-tbtn" style="background:#eef2f7;color:#1F2D3D;border-color:#e2e8f0" type="button" onclick="cbCloseAll()">Close</button></div>
+    <div class="cb-modal-body"></div>
+    <div class="cb-modal-foot"><span id="cbExportFb" style="font-size:12px;color:#64748b"></span><button class="cb-save" type="button" onclick="cbExport()">Copy all</button></div>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='cbComments_v1';
+  var st={add:false, show:true};
+  var comments=load();
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch(e){ return []; } }
+  function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(comments)); }catch(e){} }
+  function activeView(){ var v=document.querySelector('.view.active'); return v?v.id:((document.querySelector('.view')||{}).id||'view-landing'); }
+  function layer(){ var l=document.getElementById('cb-layer'); if(!l){ l=document.createElement('div'); l.id='cb-layer'; document.body.appendChild(l);} return l; }
+  function setCount(){ var c=document.getElementById('cbCount'); if(c) c.textContent=comments.length; }
+  function viewLabel(v){ return ({'view-landing':'Configurations list','view-wizard':'Create / Detail','view-runner':'Test Runner','view-mydata':'My Data'})[v]||v; }
+  function esc(s){ return (s||'').replace(/[&<>]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];}); }
+  function render(){
+    var l=layer(); l.innerHTML='';
+    if(!st.show) return;
+    var av=activeView();
+    comments.forEach(function(c,i){
+      if(c.view!==av) return;
+      var p=document.createElement('div'); p.className='cb-pin'; p.textContent=(i+1);
+      p.style.left=c.x+'px'; p.style.top=c.y+'px';
+      p.dataset.id=c.id;
+      p.onclick=function(e){ e.stopPropagation(); openPop(c); };
+      l.appendChild(p);
+    });
+  }
+  function closePop(){ var p=document.getElementById('cb-pop'); if(p) p.remove(); }
+  function openPop(c){
+    closePop();
+    var pop=document.createElement('div'); pop.className='cb-pop'; pop.id='cb-pop';
+    pop.style.left=c.x+'px'; pop.style.top=c.y+'px';
+    pop.onclick=function(e){ e.stopPropagation(); };
+    var ta=document.createElement('textarea'); ta.value=c.text||''; ta.placeholder='Add a comment…';
+    var act=document.createElement('div'); act.className='cb-pop-actions';
+    var del=document.createElement('button'); del.className='cb-del'; del.type='button'; del.textContent='Delete';
+    var sav=document.createElement('button'); sav.className='cb-save'; sav.type='button'; sav.textContent='Save';
+    del.onclick=function(){ comments=comments.filter(function(x){return x.id!==c.id;}); persist(); closePop(); render(); setCount(); };
+    sav.onclick=function(){ c.text=ta.value.trim(); persist(); closePop(); render(); };
+    act.appendChild(del); act.appendChild(sav);
+    pop.appendChild(ta); pop.appendChild(act);
+    layer().appendChild(pop); ta.focus();
+  }
+  function updShow(){ var b=document.getElementById('cbShowBtn'); if(b) b.textContent=st.show?'Hide':'Show'; render(); }
+  window.cbToggleShow=function(){ st.show=!st.show; updShow(); };
+  window.cbToggleAdd=function(){
+    st.add=!st.add;
+    document.body.classList.toggle('cb-adding', st.add);
+    var b=document.getElementById('cbAddBtn'); if(b) b.classList.toggle('on', st.add);
+    if(st.add && !st.show){ st.show=true; updShow(); }
+    if(!st.add) closePop();
+  };
+  // In comment mode, a click anywhere on the canvas drops a pin (and is intercepted so it doesn't
+  // trigger the underlying app control). Top bar, pins, popover, modal and sidebar are excluded.
+  document.addEventListener('click', function(e){
+    if(!st.add) return;
+    if(e.target.closest('.cb-topbar')||e.target.closest('.cb-pin')||e.target.closest('.cb-pop')||e.target.closest('.cb-modal')||e.target.closest('.sidebar')) return;
+    e.preventDefault(); e.stopPropagation();
+    var c={ id:'c'+Date.now()+Math.floor(Math.random()*1000), view:activeView(), x:Math.round(e.pageX), y:Math.round(e.pageY), text:'' };
+    comments.push(c); persist(); render(); setCount(); openPop(c);
+  }, true);
+  window.cbOpenAll=function(){
+    var m=document.getElementById('cb-modal'); var body=m.querySelector('.cb-modal-body'); body.innerHTML='';
+    if(!comments.length){ body.innerHTML='<div style="padding:18px;color:#64748b;font-size:13px">No comments yet. Click <b>Comment</b>, then click anywhere on the page to drop one.</div>'; }
+    comments.forEach(function(c,i){
+      var row=document.createElement('div'); row.className='cb-citem';
+      row.innerHTML='<div class="cb-cnum">'+(i+1)+'</div><div><div class="cb-ctext">'+(c.text?esc(c.text):'<em style="color:#94a3b8">(empty)</em>')+'</div><div class="cb-cmeta">'+viewLabel(c.view)+'</div></div>';
+      row.onclick=function(){ cbGoto(c.id); };
+      body.appendChild(row);
+    });
+    m.classList.add('open');
+  };
+  window.cbCloseAll=function(){ document.getElementById('cb-modal').classList.remove('open'); };
+  window.cbGoto=function(id){
+    var c=comments.find(function(x){return x.id===id;}); if(!c) return;
+    cbCloseAll();
+    var name=c.view.replace('view-','');
+    if(typeof showView==='function'){ try{ showView(name); }catch(e){} }
+    if(!st.show){ st.show=true; updShow(); }
+    setTimeout(function(){
+      render();
+      window.scrollTo({ top:Math.max(0, c.y-180), behavior:'smooth' });
+      layer().querySelectorAll('.cb-pin').forEach(function(p){
+        if(p.dataset.id===id){ p.style.outline='3px solid #F59E0B'; p.style.outlineOffset='2px'; setTimeout(function(){ p.style.outline=''; },1800); }
+      });
+    },140);
+  };
+  window.cbExport=function(){
+    var txt=comments.map(function(c,i){ return (i+1)+'. ['+viewLabel(c.view)+'] '+(c.text||'(empty)'); }).join('\n');
+    var fb=document.getElementById('cbExportFb');
+    if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){ if(fb){ fb.textContent='Copied '+comments.length+' comment(s).'; setTimeout(function(){fb.textContent='';},2200);} }); }
+  };
+  // Re-render pins whenever the active view changes.
+  document.querySelectorAll('.view').forEach(function(v){
+    new MutationObserver(render).observe(v,{attributes:true,attributeFilter:['class']});
+  });
+  window.addEventListener('resize', render);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closePop(); cbCloseAll(); if(st.add) cbToggleAdd(); } });
+  setCount(); render();
+})();
 </script>
 </body>
 </html>
