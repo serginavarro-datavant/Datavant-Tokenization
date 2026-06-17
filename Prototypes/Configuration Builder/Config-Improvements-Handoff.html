@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tokenization Config — Developer Hand-off</title>
+<style>
+  :root{
+    --navy:#1F2D3D; --slate:#4A5568; --blue:#2B6CB0; --blue-bg:#EBF2FA;
+    --line:#E2E8F0; --bg:#F7FAFC; --card:#FFFFFF; --code:#F1F5F9;
+    --green:#1F7C53; --green-bg:#E6F4EE; --amber:#8A6D00; --amber-bg:#FEF7E0; --red:#B42318; --red-bg:#FDECEA;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);color:var(--navy);background:var(--bg);line-height:1.55}
+  a{color:var(--blue);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 24px 80px}
+  /* header */
+  .top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  .top h1{font-size:24px;margin:0 0 4px}
+  .top p{margin:0;color:var(--slate);font-size:13px;max-width:640px}
+  .proto-btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;white-space:nowrap}
+  .proto-btn:hover{text-decoration:none;background:#16202c}
+  /* filters */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--slate);cursor:pointer}
+  .chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;transition:box-shadow .12s,transform .12s;display:block}
+  .card:hover{box-shadow:0 6px 18px rgba(31,45,61,.10);transform:translateY(-1px);text-decoration:none}
+  .card .cid{font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:700}
+  .card h3{margin:4px 0 8px;font-size:15px;color:var(--navy)}
+  .card .meta{display:flex;flex-wrap:wrap;gap:6px}
+  .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em}
+  .b-area{background:var(--blue-bg);color:var(--blue)}
+  .b-p1{background:var(--red-bg);color:var(--red)} .b-p2{background:var(--amber-bg);color:var(--amber)}
+  .b-p3{background:#EEF2F7;color:var(--slate)} .b-p4{background:#EEF2F7;color:var(--slate)}
+  .b-eff{background:#EDE9FE;color:#6D28D9}
+  .b-pres{background:var(--green-bg);color:var(--green)} .b-state{background:var(--amber-bg);color:var(--amber)} .b-cross{background:var(--red-bg);color:var(--red)}
+  /* detail */
+  .crumb{font-size:13px;color:var(--slate);margin-bottom:14px}
+  .detail-head h2{font-size:22px;margin:2px 0 10px}
+  .detail-head .cid{font-family:var(--mono);font-size:13px;color:var(--blue);font-weight:700}
+  .detail-head .meta{margin-bottom:18px}
+  section.blk{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:14px}
+  section.blk h4{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--slate)}
+  section.blk p{margin:0 0 10px}
+  ul.tight{margin:0;padding-left:20px} ul.tight li{margin:4px 0}
+  .file{font-family:var(--mono);font-size:12.5px;background:var(--code);border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--navy);white-space:nowrap}
+  .filerow{display:flex;gap:10px;align-items:flex-start;margin:8px 0;flex-wrap:wrap}
+  .filerow .note{color:var(--slate);font-size:13px;flex:1;min-width:220px}
+  .ds{display:inline-block;font-family:var(--mono);font-size:12px;background:#fff;border:1px solid var(--blue);color:var(--blue);border-radius:6px;padding:2px 8px;margin:0 6px 6px 0}
+  .callout{border-left:3px solid var(--amber);background:var(--amber-bg);padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#5c4a00}
+  .callout.cross{border-color:var(--red);background:var(--red-bg);color:#7a1d12}
+  .dep a{font-family:var(--mono);font-size:12.5px}
+  .protolink{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13px;background:var(--blue-bg);color:var(--blue);padding:8px 14px;border-radius:8px}
+  .protolink:hover{text-decoration:none;background:#dfeaf7}
+  .shots{display:flex;flex-direction:column;gap:12px}
+  .shot{max-width:100%;border:1px solid var(--line);border-radius:8px;display:block;background:#fff}
+  .card .thumb{width:100%;height:128px;object-fit:cover;object-position:top left;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff}
+  .jira{font-family:var(--mono);font-weight:700}
+  .jira-blk{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .jira-blk h4{margin:0}
+  .jira-btn{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;font-family:var(--mono);font-size:13px;font-weight:700;padding:8px 14px;border-radius:8px}
+  .jira-btn:hover{text-decoration:none;background:#21568c}
+  .jira-meta{font-size:12px;color:var(--slate)}
+  .jira-chip{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;background:var(--blue-bg);color:var(--blue);border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+  .hidden{display:none}
+  .legend{font-size:12px;color:var(--slate);margin:0 0 18px}
+  .legend b{color:var(--navy)}
+  footer{margin-top:30px;color:var(--slate);font-size:12px;border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="app"></div>
+  <footer>
+    Reference-only hand-off. The prototype demonstrates intended look &amp; behaviour — <b>do not port its CSS/markup</b>.
+    Build with the existing DART / UiKit components named on each page. Paths are relative to
+    <span class="file">portal_client/src/</span>.
+  </footer>
+</div>
+
+<script>
+/* ============================ DATA ============================ */
+const PROTO = "./config-page.html";
+const BUCKETS = {
+  pres:  {label:"Presentational", cls:"b-pres"},
+  state: {label:"State / flow",   cls:"b-state"},
+  cross: {label:"Cross-cutting (ADR)", cls:"b-cross"}
+};
+// Each improvement: change -> code map ready to implement.
+const IMP = [
+ {id:"IMP-01",title:"Tabs → Stepper wizard",area:"Create wizard",impact:"Modify",effort:"L",pri:"P1",bucket:"cross",
+  what:"Convert the 5-tab create/edit layout into a guided, mode-aware Stepper (Tokenization: Input·Output·Format·Validate·Confirmation; +Onboarding for both; Data Onboarding: Onboarding·Format·Confirmation).",
+  why:"Keystone change. A linear stepper makes the flow legible and is the spine most other wizard items depend on.",
+  files:[["views/ConfigurationsTask.tsx","Replace the Tabs layout + mode RadioGroup with a stepper state machine; derive step order from mode."],["designSystem/components/stepper/Stepper.tsx","Reuse the existing DS Stepper — do not build a new one."],["views/ConfigurationsTaskRouteView.tsx","Route/step sync."]],
+  ds:["Stepper (designSystem)","UiKit.Button"],
+  deps:[["—","Keystone; blocks IMP-02, IMP-05, IMP-07, IMP-09, IMP-14"]],
+  ac:["Steps render from the DS Stepper, ordered by mode","Tokenization, Onboarding, and both modes each show the correct step set","Per-step state preserved when moving back/next"],
+  proto:"Create a new config and walk the stepper; switch mode to see step set change."},
+
+ {id:"IMP-02",title:"Create on final step",area:"Create wizard",impact:"Modify",effort:"M",pri:"P1",bucket:"state",
+  what:"Remove the standalone Create button / separate review; the final step CTA becomes “Create Configuration”, wired to the existing save path.",
+  why:"Creation should be the natural end of the flow, not an orphan affordance triggerable mid-flow.",
+  files:[["views/ConfigurationsTask.tsx","Move save CTA to the last step (handleSaveButtonClick)."],["components/configWizard/ConfigSaver.tsx","Existing save path — reuse."],["components/configWizard/ConfigCreator.tsx","Config assembly helper."]],
+  ds:["UiKit.Button.Primary"],
+  deps:[["IMP-01","Stepper provides the final step"]],
+  ac:["No standalone Create button in the tab/step bar","Final step primary CTA = Create Configuration","Wired to the existing save endpoint"],
+  proto:"Stepper → final step shows Create Configuration."},
+
+ {id:"IMP-03",title:"Read-only by default + Edit mode",area:"Detail view",impact:"Modify",effort:"M",pri:"P1",bucket:"state",
+  what:"Opening a config shows a read-only view; an Edit button unlocks the fields.",
+  why:"Most opens are to review, not edit. Read-only-first prevents accidental edits and de-clutters.",
+  files:[["views/ConfigurationsReadonlyRouteView.tsx","Read-only entry; render plain values."],["views/ConfigurationsEditRouteView.tsx","Edit entry; unlock fields."],["views/ConfigurationsTask.tsx","Shared body; gate edit affordances on an editing flag."],["views/ConfigurationsTitle.tsx","Header Edit toggle + Save/Cancel."]],
+  ds:["UiKit.Button"],
+  deps:[["IMP-01","Shares the tab/step body"]],
+  ac:["Detail opens read-only with no edit affordances","Edit unlocks fields and shows Save/Cancel","Viewers never see Edit"],
+  proto:"Click a config → read-only; press Edit to unlock."},
+
+ {id:"IMP-04",title:"Detail header actions + gating",area:"Detail view",impact:"Modify",effort:"M",pri:"P1",bucket:"state",
+  what:"Read-only shows Edit · Clone · Download; edit mode shows Edit setup · Clone · Run test · Download · Share · (Revert if clone) · Delete · Cancel · Save. Delete & Share are gated behind Edit (they mutate the config).",
+  why:"Destructive/mutating actions shouldn't be reachable from a passive read-only view.",
+  files:[["views/ConfigurationsTitle.tsx","Header action bar; show/hide by rights + editing."],["components/configWizard/RowActionsMenuButton.tsx","Keep the list-row action matrix consistent with the header."],["components/configWizard/ShareConfigurationModal.tsx","Share trigger."],["components/configWizard/DeleteConfigurationModal.tsx","Delete trigger."]],
+  ds:["UiKit.Button","UiKit.DotsMenu"],
+  deps:[["IMP-03","Editing flag"],["IMP-24","Rights drive which actions show"]],
+  ac:["Read-only: Edit, Clone, Download only","Edit: full action set; Delete & Share only in edit mode","Action set respects rights"],
+  proto:"Compare header actions in read-only vs Edit."},
+
+ {id:"IMP-05",title:"Stepper footer navigation",area:"Create wizard",impact:"New",effort:"S",pri:"P1",bucket:"pres",
+  what:"Cancel (left), Back (outline, appears after step 1), Next (filled) → Create on the last step.",
+  why:"Standard wizard navigation; replaces ad-hoc tab clicking.",
+  files:[["views/ConfigurationsTask.tsx","Footer nav bar tied to stepper index."]],
+  ds:["UiKit.Button.Secondary","UiKit.Button.Primary"],
+  deps:[["IMP-01","Stepper index"]],
+  ac:["Back hidden on step 1","Next advances; last step shows Create","Cancel always available"],
+  proto:"Footer buttons across steps."},
+
+ {id:"IMP-06",title:"Save → version + success banner",area:"Detail view",impact:"Modify",effort:"S",pri:"P1",bucket:"state",
+  what:"Save commits, bumps the version, shows a green dismissible/auto-dismiss banner; Cancel always confirms and reverts.",
+  why:"Clear positive feedback + a versioning model the user can trust.",
+  files:[["components/configWizard/ConfigSaver.tsx","Commit + version bump."],["views/ConfigurationsTitle.tsx","Save/Cancel + banner trigger; reuse original* dirty snapshots for revert."]],
+  ds:["UiKit AlertMessage / Alert (success)","ConfirmationDialog"],
+  deps:[["IMP-03","Edit mode"]],
+  ac:["Save bumps version and shows a green banner (dismiss + auto-dismiss)","Cancel confirms then reverts to the pre-edit snapshot"],
+  proto:"Edit → Save (banner); Edit → Cancel (confirm)."},
+
+ {id:"IMP-07",title:"Per-step validation dialog",area:"Create wizard",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"On Next, surface validation: errors block (Close only), warnings allow continue. Retarget existing validators instead of the submit-time modal.",
+  why:"Catch issues per step, not all at the end.",
+  files:[["components/configWizard/ConfigurationValidationResults.tsx","Validation rendering."],["components/configWizard/QualityCheckerModal.tsx","Reuse/retarget the checks modal per step."],["views/ConfigurationsTask.tsx","Run validation on Next."]],
+  ds:["Modal / ModalBody","UiKit.Button"],
+  deps:[["IMP-01","Step transitions"],["IMP-29","Shares the checks UI"]],
+  ac:["Errors block progression (Close only)","Warnings allow continue","Validators reused, not duplicated"],
+  proto:"Click Next with an issue (e.g., DOB not nulled)."},
+
+ {id:"IMP-08",title:"Unsaved-changes guard",area:"Create + Detail",impact:"Modify",effort:"S",pri:"P2",bucket:"state",
+  what:"Confirm before leaving the wizard or an edit session with unsaved changes.",
+  why:"Prevents silent loss of work.",
+  files:[["views/ConfigurationsTitle.tsx","Dirty detection via original* snapshots."],["views/ConfigurationsTask.tsx","Intercept navigation away."],["views/ConfigurationsEditRouteView.tsx","Route-leave guard."]],
+  ds:["ConfirmationDialog"],
+  deps:[["IMP-06","Shares the dirty/snapshot mechanism"]],
+  ac:["Leaving with unsaved edits prompts a confirm","Clean state leaves silently"],
+  proto:"Edit something, then try to leave."},
+
+ {id:"IMP-09",title:"Mode change → reset to step 1",area:"Create wizard",impact:"Modify",effort:"S",pri:"P2",bucket:"state",
+  what:"Changing mode mid-setup resets to the first step so empty steps aren’t falsely marked complete.",
+  why:"Mode reshapes the step set; stale progress is misleading.",
+  files:[["views/ConfigurationsTask.tsx","On mode change, recompute step order + reset index."],["views/DeID/ConfigurationModeIcons.tsx","Mode display."]],
+  ds:["FormRadioList / Stepper"],
+  deps:[["IMP-01","Step order is mode-derived"]],
+  ac:["Changing mode returns to step 1","Steps that no longer apply are dropped"],
+  proto:"Change mode mid-wizard."},
+
+ {id:"IMP-10",title:"Onboarding Profile Model dropdown",area:"Onboarding",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"Grouped mapping dropdown (Identifiers / Demographics / Clinical / Providers / Tokens) using the de-identified field list; direct identifiers fall to “Do Not Map”.",
+  why:"A flat list is unscannable; grouping reflects the real profile model. Confirm field list + token series with backend.",
+  files:[["components/configWizard/ConfigWizardIngestionLayout.tsx","Onboarding mapping grid."],["components/configWizard/ConfigWizardIngestionColumn.tsx","Per-column mapping dropdown."],["components/configWizard/DataTypeSelectorComponent.tsx","Grouped option source."]],
+  ds:["UiKit Select (grouped / optgroup)"],
+  deps:[["Backend","Confirm de-identified field list + token series"]],
+  ac:["Dropdown grouped by section","Direct identifiers default to Do Not Map","Field list matches the de-identified profile model"],
+  proto:"Onboarding step → a column's mapping dropdown."},
+
+ {id:"IMP-11",title:"Sharing as a detail tab",area:"Detail view",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"Surface sharing in a detail tab with an in-tab “Share configuration” CTA that opens the existing site-select modal (transit/connect-key note, real API).",
+  why:"Sharing is a post-create action, not a creation step.",
+  files:[["components/configWizard/ShareConfigurationModal.tsx","Existing modal (postConfigShare)."],["components/configWizard/ConfigShareTable.tsx","Recipients list."],["components/configWizard/ConfigShareRow.tsx","Recipient row."],["components/configWizard/RevokeConfigShareModal.tsx","Revoke."],["views/ConfigurationsTask.tsx","Add a Sharing tab (detail-only)."]],
+  ds:["Modal","UiKit.TableRow","UiKit.Button"],
+  deps:[["IMP-03","Detail view"]],
+  ac:["Sharing tab visible only in detail view","In-tab Share CTA opens the existing modal","Recipients list + revoke wired to the real API"],
+  proto:"Detail → Sharing tab → Share configuration."},
+
+ {id:"IMP-12",title:"Post-create landing",area:"Detail view",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"After Create, land on the read-only detail view with a success banner (keep the existing next-steps content).",
+  why:"A clear ‘done’ moment and onward path.",
+  files:[["components/configWizard/NextStepsOnConfigCreationModal.tsx","Reuse next-steps content (CLI / guides / create table)."],["components/configWizard/ConfigSaver.tsx","On create success, route to read-only detail."],["views/ConfigurationsReadonlyRouteView.tsx","Landing target."]],
+  ds:["UiKit AlertMessage","UiKit.Button"],
+  deps:[["IMP-02","Create action"],["IMP-03","Read-only detail"]],
+  ac:["Create lands on read-only detail with a success banner","Next-steps links preserved"],
+  proto:"Finish create → success banner + detail view."},
+
+ {id:"IMP-13",title:"Viewer = fully read-only",area:"Detail / permissions",impact:"Modify",effort:"S",pri:"P2",bucket:"state",
+  what:"No-rights users see plain values, no edit affordances, no action-prompting warnings; Clone is the only action.",
+  why:"Viewers shouldn't see controls they can't use.",
+  files:[["views/ConfigurationsReadonlyRouteView.tsx","Force read-only render for viewers."],["components/configWizard/RowActionsMenuButton.tsx","isSharedToMe → View + Clone only."],["utils/users.ts","hasPortalAction / ability checks."]],
+  ds:["UiKit.Button"],
+  deps:[["IMP-24","Rights model"]],
+  ac:["Viewers see plain values + Clone only","No edit affordances or creation warnings shown"],
+  proto:"Open a shared-to-me config."},
+
+ {id:"IMP-14",title:"Simplified wizard header",area:"Create wizard",impact:"Modify",effort:"S",pri:"P2",bucket:"pres",
+  what:"Name · site · a single mode chip (replaces the dual capability flags) · Draft tag.",
+  why:"The header should stay calm; counts/validation live elsewhere.",
+  files:[["views/ConfigurationsTitle.tsx","Header layout: name, site, single mode chip, Draft tag."],["views/DeID/ConfigurationModeIcons.tsx","Single mode chip."]],
+  ds:["UiKit Tag/Badge","UiKit.Text"],
+  deps:[["IMP-01","Header shared with stepper"]],
+  ac:["Header shows name, site, one mode chip, Draft tag","Dual capability flags removed"],
+  proto:"Wizard header."},
+
+ {id:"IMP-15",title:"Data type: Unspecified vs No values present",area:"Onboarding",impact:"Modify",effort:"S",pri:"P2",bucket:"pres",
+  what:"Two distinct types — Unspecified (⚠ minimal scan) vs No values present (adds the Non-null check).",
+  why:"They mean different things; collapsing them loses a real check.",
+  files:[["components/configWizard/DataTypeSelectorComponent.tsx","Two distinct options + semantics."],["components/configWizard/ConfigWizardIngestionColumn.tsx","Chip rendering (⚠ vs Non-null)."]],
+  ds:["UiKit Tag/Badge"],
+  deps:[["IMP-10","Same onboarding grid"]],
+  ac:["Both types selectable and distinct","Unspecified shows ⚠ minimal-scan; No values present adds Non-null check"],
+  proto:"Onboarding step → data-type chips."},
+
+ {id:"IMP-16",title:"Hide pre-mapped note (onboarding-only)",area:"Onboarding",impact:"Modify",effort:"S",pri:"P3",bucket:"pres",
+  what:"Hide the “we pre-mapped columns” note when the config started as Data-Onboarding-only (no input to infer from).",
+  why:"The note is false when there was no input to infer mappings from.",
+  files:[["components/configWizard/ConfigWizardIngestionLayout.tsx","Condition the note on initial mode."]],
+  ds:["UiKit.InfoBox"],
+  deps:[["IMP-09","Initial-mode tracking"]],
+  ac:["Note hidden when config began onboarding-only","Note still shown when input existed to infer from"],
+  proto:"Create an onboarding-only config; note is absent."},
+
+ {id:"IMP-17",title:"Draft status → slate",area:"List view",impact:"Modify",effort:"S",pri:"P3",bucket:"pres",
+  what:"Recolor the Draft badge + row accent from yellow to slate (yellow reserved for warnings).",
+  why:"Yellow should mean warning, not status.",
+  files:[["components/configWizard/ConfigRow.tsx","getConfigColor() accent."],["components/configWizard/DraftConfigNameCell.tsx","Draft badge color."],["designSystem/.../colors","Use a slate token, not YELLOW_50."]],
+  ds:["UiKit Badge","DS color token"],
+  deps:[["—",""]],
+  ac:["Draft badge + row accent use slate","No yellow used for Draft status"],
+  proto:"Draft rows in the list."},
+
+ {id:"IMP-18",title:"Token count label + formatting",area:"List view",impact:"Modify",effort:"S",pri:"P3",bucket:"pres",
+  what:"Add a “Tokens” label and locale thousands-separators to the count on the list.",
+  why:"Raw unlabeled numbers are hard to parse.",
+  files:[["components/configWizard/ConfigRow.tsx","generateTokenColumnCountStrings — add label + Intl formatting."],["api/countTokenColumns.ts","Count source."]],
+  ds:["UiKit.Text"],
+  deps:[["—",""]],
+  ac:["Count shows a Tokens label","Numbers use locale thousands separators","Applies consistently across surfaces"],
+  proto:"List token counts."},
+
+ {id:"IMP-19",title:"Expose site filter to all users",area:"List view",impact:"Modify",effort:"S",pri:"P3",bucket:"pres",
+  what:"The site filter currently shows only to Datavant-internal users; expose it more broadly (confirm with PM).",
+  why:"External users also benefit from filtering by site.",
+  files:[["views/ConfigurationsListView.tsx","Filter visibility."],["components/accessControl/IsInDatavantCompany.tsx","Remove/relax the internal-only gate."]],
+  ds:["DART Search / Select"],
+  deps:[["PM","Confirm exposure"]],
+  ac:["Site filter visible to non-internal users","Filters the table; composes with search"],
+  proto:"List toolbar site filter."},
+
+ {id:"IMP-20",title:"No drag-reorder in detail view",area:"Detail view",impact:"Modify",effort:"S",pri:"P3",bucket:"pres",
+  what:"Column order is fixed once a config exists; reorder stays a creation-step action only.",
+  why:"Reordering a live config's columns is risky; lock it after creation.",
+  files:[["components/configWizard/ConfigWizardInputLayout.tsx","Disable reorder when not creating."],["components/configWizard/ConfigWizardOutputLayout.tsx","Same."],["components/configWizard/ColumnNumField.tsx","Hide drag handle in detail/edit."]],
+  ds:["—"],
+  deps:[["IMP-22","Drag handle lives here"]],
+  ac:["No drag handle in detail/edit view","Reorder available only during creation"],
+  proto:"Detail edit — order is fixed."},
+
+ {id:"IMP-21",title:"Token modal PII gating",area:"Output / tokens",impact:"Modify",effort:"M",pri:"P3",bucket:"state",
+  what:"Disable tokens whose required PII isn’t present in the input, with a “Needs <fields>” note (partly stubbed today).",
+  why:"Prevents selecting tokens that can't be produced from the input.",
+  files:[["components/configWizard/TokenColumn.tsx","Enable/disable by available PII."],["components/configWizard/ConfigWizardTokenSources.tsx","Required-PII → token matching catalog."]],
+  ds:["Modal","UiKit Checkbox"],
+  deps:[["Backend","Confirm token → required-PII matrix"]],
+  ac:["Tokens needing absent PII are disabled + dimmed","“Needs <fields>” note shown","Reads live from the Input grid"],
+  proto:"Output → + Add Tokens with limited input."},
+
+ {id:"IMP-22",title:"Drag-to-reorder columns",area:"Create wizard",impact:"New",effort:"M–L",pri:"P4",bucket:"state",
+  what:"Replace the numeric order field with drag-to-reorder (react-beautiful-dnd is already installed).",
+  why:"A writable number field is unintuitive and error-prone.",
+  files:[["components/configWizard/ColumnNumField.tsx","Replace numeric field with a drag handle."],["components/configWizard/ConfigWizardInputLayout.tsx","DnD list."],["components/configWizard/ConfigWizardOutputLayout.tsx","DnD list."]],
+  ds:["react-beautiful-dnd (installed)","DS drag handle"],
+  deps:[["IMP-20","Disabled in detail"]],
+  ac:["Drag-to-reorder with auto-renumber","Keyboard-accessible reorder","No numeric order field"],
+  proto:"Input/Output grids — drag handle on #."},
+
+ {id:"IMP-23",title:"List pagination + sortable columns",area:"List view",impact:"New",effort:"M–L",pri:"P4",bucket:"state",
+  what:"Add pagination/infinite-scroll and column sorting to the configs list (today renders all rows, no sort).",
+  why:"Scales the list and lets users find configs.",
+  files:[["views/ConfigurationsList.tsx","Pagination/infinite-scroll + sort state."],["views/ConfigurationsListView.tsx","Wire query params."],["views/DeID/AppConfigurations.tsx","Data fetch."]],
+  ds:["UiKit Table","DS pagination"],
+  deps:[["Backend","Paged/sorted query support"]],
+  ac:["Rows load incrementally (or paginate)","Columns sortable","Sort + filter + search compose"],
+  proto:"Scroll the list; click a column header."},
+
+ {id:"IMP-24",title:"3-tier rights (owner/editor/viewer)",area:"Permissions",impact:"New",effort:"L",pri:"P4",bucket:"cross",
+  what:"A per-config rights model beyond today’s app-wide abilities + shared/draft flags. Needs a backend/model change.",
+  why:"Today rights are app-wide abilities + isSharedToMe/isDraft; a real per-config role model is needed to drive the detail + list actions cleanly.",
+  files:[["types/users.ts","Add per-config role."],["utils/users.ts","hasPortalAction → per-config resolution."],["components/configWizard/RowActionsMenuButton.tsx","Drive the action matrix from the role."],["views/ConfigurationsTitle.tsx","Header actions from the role."]],
+  ds:["—"],
+  deps:[["Backend","Per-config role on the config payload"],["ADR","Define the rights model + predicate mapping"]],
+  ac:["owner = edit+delete+share; editor = edit only; viewer = clone only","List + detail actions derive from one role source","Back-compat with current ability/shared/draft logic documented"],
+  proto:"Compare action sets across owned / shared / draft rows."},
+
+ {id:"IMP-25",title:"Header compaction + “?” help popover",area:"List view",impact:"Modify",effort:"S",pri:"P3",bucket:"pres",
+  what:"New Configurations header that saves vertical space; the persistent info banner moves under a “?” help icon/popover.",
+  why:"Reclaim vertical space; help on demand instead of an always-on banner.",
+  files:[["views/ConfigurationsHomeView.tsx","Compact header layout."],["components/configWizard/ConfigWizardAddConfigurationMenu.tsx","Add Configuration menu."],["views/ConfigurationsMoreInformationLink.tsx","Move banner content under a ? popover."]],
+  ds:["UiKit Popover / Tooltip","UiKit IconButton"],
+  deps:[["—",""]],
+  ac:["Compact header; banner removed from the page body","Help content reachable via a ? popover"],
+  proto:"List header + ? help."},
+
+ {id:"IMP-26",title:"New table header (Version column + reordering)",area:"List view",impact:"Modify",effort:"M",pri:"P2",bucket:"pres",
+  what:"New table header with a Version column and reordered columns.",
+  why:"Surfaces versioning at a glance and improves scanability.",
+  files:[["views/ConfigurationsList.tsx","Column set + order + header."],["components/configWizard/ConfigRow.tsx","Render the version cell."],["components/configWizard/ConfigVersionTable.tsx","Version sub-rows."]],
+  ds:["UiKit Table / TableRow"],
+  deps:[["IMP-23","Header hosts sort"]],
+  ac:["Version column present","Column order updated","Header matches the new spec"],
+  proto:"List table header + Version column."},
+
+ {id:"IMP-27",title:"Expandable version rows + per-version actions",area:"List view",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"Expandable version rows; each version child is clickable and actionable via its own menu.",
+  why:"Lets users inspect and act on history without leaving the list.",
+  files:[["components/configWizard/ConfigRow.tsx","Expand/collapse (expandConfigVersion)."],["components/configWizard/ConfigVersionTable.tsx","Render version rows + per-version actions."],["components/configWizard/RowActionsMenuButton.tsx","Per-version action menu (restore handler ⇒ not latest)."]],
+  ds:["UiKit.DotsMenu","UiKit.TableRow","UiKit IconButton"],
+  deps:[["IMP-28","Action logic per version"]],
+  ac:["Parent row expands to previous versions","Each version row is clickable + has its own actions"],
+  proto:"Expand a config's versions; hover a version row."},
+
+ {id:"IMP-28",title:"Per-version action logic",area:"List view",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"Each row exposes its actions through a single always-visible kebab (⋮) that opens an icon+label menu (DART DotsMenu) — no crowded inline icons, no tooltips needed. The menu contents depend on the row's state. Owned latest: Open in new tab · Edit · Clone · Share · Download test input · Delete (Delete separated below a divider). Previous version, owned: Open in new tab · Clone · Restore this version (not clone-only). Shared-to-me: Open in new tab · Clone. Draft: Edit · Delete (Open in new tab / Clone / Share are !isDraft-gated out). “Open in new tab” mirrors the real product (openInNewWindow) and is distinct from clicking the row, which opens in place.",
+  why:"Actions must reflect what's valid for each row's state, and the affordance must be discoverable without crowding the row or relying on hover-only icons.",
+  files:[["components/configWizard/RowActionsMenuButton.tsx","The DotsMenu + the matrix: latestVersion = (restoreClickHandler === undefined); ability + portalAction(create/share) + isSharedToMe + isDraft gates. View opens with openInNewWindow."],["components/configWizard/ConfigRow.tsx","Parent passes delete/share/download; no restore (⇒ latest)."],["components/configWizard/ConfigVersionTable.tsx","Version rows pass only restore (⇒ not latest)."]],
+  ds:["UiKit.DotsMenu (icon + label items)"],
+  deps:[["IMP-27","Version rows"],["IMP-24","Rights"]],
+  ac:["Single always-visible kebab per row; menu items are icon + label","Each row state shows exactly its valid actions","Open in new tab present on all but drafts; previous versions include Restore (not clone-only)","Shared = Open in new tab + Clone; Draft = Edit + Delete"],
+  proto:"Open the kebab on each row type — latest, previous version, shared, draft — and compare the menus."},
+
+ {id:"IMP-29",title:"Automated Checks modal — surface warnings + Confirmation",area:"Validation",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"Show compatibility + configuration warnings expanded by default in plain language (no buried accordions/jargon). The Confirmation step carries the same warnings plus a required approval rationale, an override checkbox, and an email to config_privacy_checker@datavant.com.",
+  why:"Users must see and act on warnings; the approval trail must be captured.",
+  files:[["components/configWizard/ConfigurationValidationResults.tsx","Default-expand callouts; plain-language copy."],["components/configWizard/QualityCheckerModal.tsx","Automated Checks modal."],["views/ConfigurationsTask.tsx","Net-new Confirmation step (rationale + override checkbox)."],["components/configWizard/ConfigSaver.tsx","Email notification on create."],["api/configs.ts","pushConfigEmailNotification."]],
+  ds:["Modal","UiKit AlertMessage (warn)","FormItem (rationale)","UiKit Checkbox (override)"],
+  deps:[["IMP-07","Shares validators"],["IMP-01","Confirmation step in stepper"]],
+  ac:["Compatibility + warnings shown expanded, plain language","Confirmation step: required rationale + explicit override checkbox","On create, the warnings + rationale are emailed for documentation"],
+  proto:"Validate → Run Test (modal); Confirmation step."}
+];
+
+// Visual references pulled from the source doc (Tokenization Workflow & Usability Improvements).
+const IMG = {"IMP-01": ["handoff-assets/IMP-01-1.png"], "IMP-02": ["handoff-assets/IMP-02-1.png", "handoff-assets/IMP-02-2.png", "handoff-assets/IMP-02-3.png"], "IMP-03": ["handoff-assets/IMP-03-1.png", "handoff-assets/IMP-03-2.png"], "IMP-04": ["handoff-assets/IMP-04-1.png", "handoff-assets/IMP-04-2.png"], "IMP-05": ["handoff-assets/IMP-05-1.png", "handoff-assets/IMP-05-2.png", "handoff-assets/IMP-05-3.png"], "IMP-06": ["handoff-assets/IMP-06-1.png", "handoff-assets/IMP-06-2.png"], "IMP-07": ["handoff-assets/IMP-07-1.png"], "IMP-08": ["handoff-assets/IMP-08-1.png"], "IMP-09": ["handoff-assets/IMP-09-1.png"], "IMP-10": ["handoff-assets/IMP-10-1.png"], "IMP-11": ["handoff-assets/IMP-11-1.png"], "IMP-12": ["handoff-assets/IMP-12-1.png"], "IMP-13": ["handoff-assets/IMP-13-1.png"], "IMP-14": ["handoff-assets/IMP-14-1.png"], "IMP-15": ["handoff-assets/IMP-15-1.png", "handoff-assets/IMP-15-2.png"], "IMP-16": ["handoff-assets/IMP-16-1.png"], "IMP-17": ["handoff-assets/IMP-17-1.png"], "IMP-18": ["handoff-assets/IMP-18-1.png"], "IMP-19": ["handoff-assets/IMP-19-1.png"], "IMP-20": ["handoff-assets/IMP-20-1.png"], "IMP-21": ["handoff-assets/IMP-21-1.png", "handoff-assets/IMP-21-2.png"], "IMP-22": ["handoff-assets/IMP-22-1.png"], "IMP-23": ["handoff-assets/IMP-23-1.png"], "IMP-24": ["handoff-assets/IMP-24-1.png", "handoff-assets/IMP-24-2.png"], "IMP-25": ["handoff-assets/IMP-25-1.png", "handoff-assets/IMP-25-2.png"], "IMP-26": ["handoff-assets/IMP-26-1.png"], "IMP-27": ["handoff-assets/IMP-27-1.png", "handoff-assets/IMP-27-2.png"], "IMP-28": ["handoff-assets/IMP-28-kebab.svg"], "IMP-29": ["handoff-assets/IMP-29-1.png", "handoff-assets/IMP-29-2.png"]};
+
+// Jira implementation tickets (APP project, epic APP-3279).
+const JIRA_BASE = "https://datavant.atlassian.net/browse/";
+const JIRA = {"IMP-01":"APP-3388","IMP-02":"APP-3389","IMP-03":"APP-3390","IMP-04":"APP-3391","IMP-05":"APP-3392","IMP-06":"APP-3393","IMP-07":"APP-3394","IMP-08":"APP-3395","IMP-09":"APP-3396","IMP-10":"APP-3397","IMP-11":"APP-3398","IMP-12":"APP-3399","IMP-13":"APP-3400","IMP-14":"APP-3401","IMP-15":"APP-3402","IMP-16":"APP-3403","IMP-17":"APP-3404","IMP-18":"APP-3405","IMP-19":"APP-3406","IMP-20":"APP-3407","IMP-21":"APP-3408","IMP-22":"APP-3409","IMP-23":"APP-3410","IMP-24":"APP-3411","IMP-25":"APP-3412","IMP-26":"APP-3413","IMP-27":"APP-3414","IMP-28":"APP-3415","IMP-29":"APP-3416"};
+
+/* ============================ RENDER ============================ */
+const app = document.getElementById('app');
+const PRI = id => "b-"+ (IMP.find(x=>x.id===id)||{}).pri?.toLowerCase();
+
+function bucketBadge(b){const m=BUCKETS[b];return `<span class="badge ${m.cls}">${m.label}</span>`}
+function el(html){const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstChild}
+
+function renderHub(filter){
+  const items = IMP.filter(i=> !filter || filter==='all' || i.bucket===filter);
+  app.innerHTML = `
+   <div class="top">
+     <div>
+       <h1>Tokenization Config — Developer Hand-off</h1>
+       <p>Navigable change → code map for each improvement. Open an item for the files to touch, the DART/UiKit components to use, dependencies, and acceptance criteria. The prototype shows intended behaviour only.</p>
+     </div>
+     <a class="proto-btn" href="${PROTO}" target="_blank" rel="noopener">▶ Open prototype</a>
+   </div>
+   <p class="legend">Buckets — <b>Presentational</b>: maps onto existing components, low risk. <b>State / flow</b>: changes state/behaviour. <b>Cross-cutting</b>: needs an ADR before implementation. Click any card.</p>
+   <div class="filters">
+     ${['all','pres','state','cross'].map(f=>`<span class="chip ${ (filter||'all')===f?'active':''}" data-f="${f}">${f==='all'?'All ('+IMP.length+')':BUCKETS[f].label+' ('+IMP.filter(i=>i.bucket===f).length+')'}</span>`).join('')}
+   </div>
+   <div class="grid">
+     ${items.map(i=>`
+       <a class="card" href="#/${i.id}">
+         ${(IMG[i.id]&&IMG[i.id].length)?`<img class="thumb" src="${IMG[i.id][0]}" alt="" loading="lazy"/>`:''}
+         <div class="cid">${i.id}${JIRA[i.id]?` <span class="jira-chip">${JIRA[i.id]}</span>`:''}</div>
+         <h3>${i.title}</h3>
+         <div class="meta">
+           <span class="badge b-area">${i.area}</span>
+           <span class="badge ${PRI(i.id)}">${i.pri}</span>
+           <span class="badge b-eff">${i.effort}</span>
+           ${bucketBadge(i.bucket)}
+         </div>
+       </a>`).join('')}
+   </div>`;
+  app.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>renderHub(c.dataset.f)));
+}
+
+function depLink(d){
+  const [ref,note]=d;
+  const isImp=/^IMP-\d{2}$/.test(ref);
+  const r = isImp ? `<a href="#/${ref}" class="file">${ref}</a>` : `<span class="file">${ref}</span>`;
+  return `<li>${r}${note?' — '+note:''}</li>`;
+}
+
+function renderDetail(i){
+  const isCross = i.bucket==='cross';
+  app.innerHTML = `
+   <div class="crumb"><a href="#/">← All improvements</a> &nbsp;/&nbsp; ${i.id}</div>
+   <div class="detail-head">
+     <div class="cid">${i.id}${JIRA[i.id]?` · <a class="jira" href="${JIRA_BASE}${JIRA[i.id]}" target="_blank" rel="noopener">${JIRA[i.id]} ↗</a>`:''}</div>
+     <h2>${i.title}</h2>
+     <div class="meta">
+       <span class="badge b-area">${i.area}</span>
+       <span class="badge ${PRI(i.id)}">Priority ${i.pri}</span>
+       <span class="badge b-eff">Effort ${i.effort}</span>
+       <span class="badge b-pres" style="background:#EEF2F7;color:#4A5568">Code: ${i.impact}</span>
+       ${bucketBadge(i.bucket)}
+     </div>
+   </div>
+
+   ${JIRA[i.id]?`<section class="blk jira-blk"><h4>Jira ticket</h4>
+     <a class="jira-btn" href="${JIRA_BASE}${JIRA[i.id]}" target="_blank" rel="noopener">${JIRA[i.id]} — open in Jira ↗</a>
+     <span class="jira-meta">Apps (Tokenization) · epic <a href="${JIRA_BASE}APP-3279" target="_blank" rel="noopener">APP-3279</a> · Team: Tokenization</span>
+   </section>`:''}
+
+   ${isCross?`<div class="callout cross"><b>Cross-cutting — needs an ADR first.</b> Agree the design decision before writing implementation tickets; otherwise it gets reinvented per file.</div><div style="height:14px"></div>`:''}
+
+   ${(IMG[i.id]&&IMG[i.id].length)?`<section class="blk"><h4>Visual reference</h4>
+     <div class="shots">${IMG[i.id].map(src=>`<a href="${src}" target="_blank" rel="noopener"><img class="shot" src="${src}" alt="${i.id} reference" loading="lazy"/></a>`).join('')}</div>
+     <p style="margin-top:10px;color:var(--slate);font-size:12px">From the source doc. Click to open full size. Behaviour is live in the <a href="${PROTO}" target="_blank" rel="noopener">prototype</a>.</p>
+   </section>`:''}
+
+   <section class="blk"><h4>What changes</h4><p>${i.what}</p></section>
+   <section class="blk"><h4>Why</h4><p>${i.why}</p></section>
+
+   <section class="blk">
+     <h4>Change → code map</h4>
+     ${i.files.map(f=>`<div class="filerow"><span class="file">${f[0]}</span><span class="note">${f[1]}</span></div>`).join('')}
+   </section>
+
+   <section class="blk">
+     <h4>DART / UiKit components to use</h4>
+     <div>${i.ds.map(d=>`<span class="ds">${d}</span>`).join('')}</div>
+     <p style="margin-top:10px;color:var(--slate);font-size:13px">Build with these existing components. Do not port the prototype's CSS/markup.</p>
+   </section>
+
+   <section class="blk"><h4>Dependencies</h4><ul class="tight dep">${i.deps.map(depLink).join('')}</ul></section>
+
+   <section class="blk"><h4>Acceptance criteria</h4><ul class="tight">${i.ac.map(a=>`<li>${a}</li>`).join('')}</ul></section>
+
+   <section class="blk">
+     <h4>Prototype reference</h4>
+     <p style="color:var(--slate);font-size:13px;margin-bottom:10px">${i.proto}</p>
+     <a class="protolink" href="${PROTO}" target="_blank" rel="noopener">▶ Open prototype</a>
+   </section>`;
+  window.scrollTo(0,0);
+}
+
+function route(){
+  const h = location.hash.replace(/^#\//,'').trim();
+  if(!h){ renderHub('all'); return; }
+  const i = IMP.find(x=>x.id===h);
+  if(i) renderDetail(i); else renderHub('all');
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
