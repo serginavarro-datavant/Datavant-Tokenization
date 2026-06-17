@@ -58,6 +58,21 @@
   .dep a{font-family:var(--mono);font-size:12.5px}
   .protolink{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13px;background:var(--blue-bg);color:var(--blue);padding:8px 14px;border-radius:8px}
   .protolink:hover{text-decoration:none;background:#dfeaf7}
+  /* Downloadable resources (hub) */
+  .resources{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:18px}
+  .res-h{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--slate);font-weight:700;margin-bottom:10px}
+  .res-list{display:flex;flex-wrap:wrap;gap:10px}
+  .res{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--navy);font-size:13px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:#fff}
+  .res:hover{background:var(--blue-bg);border-color:var(--blue)}
+  .res svg{color:var(--blue);flex-shrink:0}
+  .res .res-name{font-weight:600}
+  .res .res-file{font-family:var(--mono);font-size:11.5px;color:var(--slate)}
+  /* DS-aware file links + ds chips */
+  a.file-link{color:var(--blue);text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:var(--blue-bg);border-color:#c9ddf2}
+  a.file-link svg{color:var(--blue)}
+  a.file-link:hover{text-decoration:underline}
+  a.ds.ds-link{text-decoration:none;cursor:pointer}
+  a.ds.ds-link:hover{background:#dfeaf7}
   .shots{display:flex;flex-direction:column;gap:12px}
   .shot{max-width:100%;border:1px solid var(--line);border-radius:8px;display:block;background:#fff}
   .card .thumb{width:100%;height:128px;object-fit:cover;object-position:top left;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff}
@@ -372,6 +387,16 @@ const IMG = {"IMP-01": ["handoff-assets/IMP-01-1.png"], "IMP-02": ["handoff-asse
 const JIRA_BASE = "https://datavant.atlassian.net/browse/";
 const JIRA = {"IMP-01":"APP-3388","IMP-02":"APP-3389","IMP-03":"APP-3390","IMP-04":"APP-3391","IMP-05":"APP-3392","IMP-06":"APP-3393","IMP-07":"APP-3394","IMP-08":"APP-3395","IMP-09":"APP-3396","IMP-10":"APP-3397","IMP-11":"APP-3398","IMP-12":"APP-3399","IMP-13":"APP-3400","IMP-14":"APP-3401","IMP-15":"APP-3402","IMP-16":"APP-3403","IMP-17":"APP-3404","IMP-18":"APP-3405","IMP-19":"APP-3406","IMP-20":"APP-3407","IMP-21":"APP-3408","IMP-22":"APP-3409","IMP-23":"APP-3410","IMP-24":"APP-3411","IMP-25":"APP-3412","IMP-26":"APP-3413","IMP-27":"APP-3414","IMP-28":"APP-3415","IMP-29":"APP-3416"};
 
+// Design-system references point devs to the DART repo; portal_client source they already have locally.
+const DART = "https://github.com/datavant/dart/tree/main";
+function isDS(p){ return /designSystem|uikit|DART/i.test(p); }
+const IC_DL  = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 13.5h10" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const IC_EXT = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 2.5h4.5V7" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 2.5L7.5 8.5" stroke-linecap="round"/><path d="M12 9.5V12a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 12V5a1.5 1.5 0 0 1 1.5-1.5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// Downloadable deliverables (kept in the published folder; refreshed on every publish/commit).
+const RESOURCES = [
+  { href: "config-page.html", name: "Configuration prototype", file: "config-page.html", dl: "config-page.html" }
+];
+
 /* ============================ RENDER ============================ */
 const app = document.getElementById('app');
 const PRI = id => "b-"+ (IMP.find(x=>x.id===id)||{}).pri?.toLowerCase();
@@ -389,6 +414,12 @@ function renderHub(filter){
      </div>
      <a class="proto-btn" href="${PROTO}" target="_blank" rel="noopener">▶ Open prototype</a>
    </div>
+   <section class="resources">
+     <div class="res-h">Downloadable resources</div>
+     <div class="res-list">
+       ${RESOURCES.map(r=>`<a class="res" href="${r.href}" download="${r.dl}">${IC_DL}<span class="res-name">${r.name}</span><span class="res-file">${r.file}</span></a>`).join('')}
+     </div>
+   </section>
    <p class="legend">Buckets — <b>Presentational</b>: maps onto existing components, low risk. <b>State / flow</b>: changes state/behaviour. <b>Cross-cutting</b>: needs an ADR before implementation. Click any card.</p>
    <div class="filters">
      ${['all','pres','state','cross'].map(f=>`<span class="chip ${ (filter||'all')===f?'active':''}" data-f="${f}">${f==='all'?'All ('+IMP.length+')':BUCKETS[f].label+' ('+IMP.filter(i=>i.bucket===f).length+')'}</span>`).join('')}
@@ -450,13 +481,19 @@ function renderDetail(i){
 
    <section class="blk">
      <h4>Change → code map</h4>
-     ${i.files.map(f=>`<div class="filerow"><span class="file">${f[0]}</span><span class="note">${f[1]}</span></div>`).join('')}
+     ${i.files.map(f=>{
+        var p = f[0];
+        var pathEl = isDS(p)
+          ? `<a class="file file-link" href="${DART}" target="_blank" rel="noopener" title="Design System — opens the DART repo">${IC_EXT}${p}</a>`
+          : `<span class="file">${p}</span>`;
+        return `<div class="filerow">${pathEl}<span class="note">${f[1]}</span></div>`;
+      }).join('')}
    </section>
 
    <section class="blk">
      <h4>DART / UiKit components to use</h4>
-     <div>${i.ds.map(d=>`<span class="ds">${d}</span>`).join('')}</div>
-     <p style="margin-top:10px;color:var(--slate);font-size:13px">Build with these existing components. Do not port the prototype's CSS/markup.</p>
+     <div>${i.ds.map(d=>`<a class="ds ds-link" href="${DART}" target="_blank" rel="noopener" title="Opens the DART design-system repo">${d} ↗</a>`).join('')}</div>
+     <p style="margin-top:10px;color:var(--slate);font-size:13px">Build with these existing components (links → the DART repo). Do not port the prototype's CSS/markup.</p>
    </section>
 
    <section class="blk"><h4>Dependencies</h4><ul class="tight dep">${i.deps.map(depLink).join('')}</ul></section>
