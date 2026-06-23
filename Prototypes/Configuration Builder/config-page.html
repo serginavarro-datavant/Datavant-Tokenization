@@ -1073,6 +1073,7 @@
     .setup-field .radio-group { margin-top: 8px; }
     input[type="text"].setup-input { width: 100%; }
     input[type="text"].setup-input.locked { background: var(--bg-mild); color: var(--color-dimmed); cursor: not-allowed; }
+    select.form-select.locked, select.form-select:disabled { background: var(--bg-mild); color: var(--color-dimmed); cursor: not-allowed; }
     .setup-field .form-select { width: 100%; }
     .modal-divider { border: none; border-top: 1px solid var(--border-mild); }
     .modal-upload-row {
@@ -3072,14 +3073,14 @@
         </div>
 
         <div class="setup-field">
-          <label class="form-label" for="setup-site">Site Name <span style="color:var(--color-error)">*</span></label>
+          <label class="form-label" for="setup-site">Site Name <span class="setup-site-req" style="color:var(--color-error)">*</span></label>
           <select id="setup-site" class="form-select" onchange="validateSetup()">
             <option value="">Select Site</option>
             <option>datavant</option>
             <option>site-prod-01</option>
             <option>site-staging-02</option>
           </select>
-          <div class="form-hint">A site is a specific token encryption with its own password and auth file. Each configuration is tied to one site.</div>
+          <div class="form-hint" id="setup-site-hint">A site is a specific token encryption with its own password and auth file. Each configuration is tied to one site.</div>
         </div>
 
         <div class="setup-field">
@@ -4683,13 +4684,23 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     var nameHint = document.getElementById('setup-name-hint');
     var introEl = document.getElementById('setup-intro-main');
     var reqStar = document.querySelector('.setup-req');
+    var siteEl = document.getElementById('setup-site');
+    var siteHint = document.getElementById('setup-site-hint');
+    var siteReq = document.querySelector('.setup-site-req');
     if (nameEl) { nameEl.readOnly = nameLocked; nameEl.classList.toggle('locked', nameLocked); }
     if (reqStar) reqStar.style.display = nameLocked ? 'none' : '';
+    // Site follows the SAME rule as the name — name+site are the config's identity (save keys on the
+    // pair), so both are fixed once created and editable only for new / clone / draft.
+    if (siteEl) { siteEl.disabled = nameLocked; siteEl.classList.toggle('locked', nameLocked); }
+    if (siteReq) siteReq.style.display = nameLocked ? 'none' : '';
+    if (siteHint) siteHint.textContent = nameLocked
+      ? 'The site can’t be changed after a configuration is created.'
+      : 'A site is a specific token encryption with its own password and auth file. Each configuration is tied to one site.';
     if (nameHint) nameHint.textContent = nameLocked
       ? 'The configuration name can’t be changed after it’s created.'
       : 'Used to select this configuration when running Datavant software.';
     if (introEl) introEl.textContent = nameLocked
-      ? 'Update this configuration’s site or mode. The name is fixed once a configuration is created.'
+      ? 'Update this configuration’s mode. The name and site are fixed once a configuration is created.'
       : 'Name your configuration, choose its site, and pick a mode to get started. You can refine everything in the next step.';
     if (edit) {
       var curName = (document.getElementById('wiz-name') || {}).value || '';
