@@ -5,37 +5,68 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Configuration Builder — Tokenization</title>
 <style>
-  :root{ color-scheme: light; --navy:#1F2D3D; --slate:#4A5568; --blue:#2B6CB0; --blue-bg:#EBF2FA; --line:#E2E8F0; --bg:#F7FAFC; --card:#fff; --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; }
+  :root{ color-scheme: light; --navy:#1F2D3D; --slate:#4A5568; --blue:#2B6CB0; --dvblue:#2945f0; --blue-bg:#EBF2FA; --line:#E2E8F0; --bg:#F7FAFC; --card:#fff; --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; }
   *{box-sizing:border-box}
-  body{margin:0;font-family:var(--font);color:var(--navy);background:var(--bg)}
-  .wrap{max-width:860px;margin:0 auto;padding:56px 24px 80px}
-  h1{font-size:28px;margin:0 0 6px}
-  .sub{color:var(--slate);font-size:14px;margin:0 0 32px;max-width:620px}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-  a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;text-decoration:none;color:inherit;transition:box-shadow .12s,transform .12s}
-  a.card:hover{box-shadow:0 8px 24px rgba(31,45,61,.10);transform:translateY(-1px)}
-  a.card h2{margin:0 0 6px;font-size:17px;color:var(--blue)}
-  a.card p{margin:0;font-size:13px;color:var(--slate);line-height:1.5}
-  .pill{display:inline-block;font-size:11px;font-weight:700;background:var(--blue-bg);color:var(--blue);border-radius:6px;padding:2px 8px;margin-bottom:10px}
-  footer{margin-top:36px;color:var(--slate);font-size:12px;border-top:1px solid var(--line);padding-top:16px}
+  body{margin:0;font-family:var(--font);color:var(--navy);background:
+    radial-gradient(1200px 480px at 75% -10%, #eaf0ff 0%, rgba(234,240,255,0) 60%),
+    radial-gradient(900px 420px at 0% 0%, #eef6ff 0%, rgba(238,246,255,0) 55%), var(--bg);
+    min-height:100vh}
+  .wrap{max-width:1080px;margin:0 auto;padding:64px 24px 90px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dvblue);background:#fff;border:1px solid #d9e0ff;border-radius:999px;padding:6px 12px;margin-bottom:18px;box-shadow:0 2px 8px rgba(41,69,240,.08)}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--dvblue)}
+  h1{font-size:40px;line-height:1.08;margin:0 0 10px;letter-spacing:-.02em}
+  .sub{color:var(--slate);font-size:15px;margin:0 0 40px;max-width:640px;line-height:1.6}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:22px}
+  a.card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;transition:box-shadow .15s,transform .15s}
+  a.card:hover{box-shadow:0 16px 44px rgba(31,45,61,.16);transform:translateY(-2px)}
+  /* Live preview window on top of each card */
+  .shot{position:relative;height:300px;overflow:hidden;background:#fff;border-bottom:1px solid var(--line)}
+  .shot .bar{position:absolute;top:0;left:0;right:0;height:30px;background:#f3f5f9;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 12px;z-index:2}
+  .shot .bar i{width:9px;height:9px;border-radius:50%;background:#d7dbe3;display:inline-block}
+  .shot iframe{position:absolute;top:30px;left:0;width:200%;height:1180px;border:0;transform:scale(.5);transform-origin:top left;pointer-events:none}
+  .shot .veil{position:absolute;inset:0;z-index:3} /* keeps the whole card the click target */
+  .body{padding:20px 22px 24px}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;background:var(--blue-bg);color:var(--blue);border-radius:6px;padding:3px 9px;margin-bottom:10px}
+  .card h2{margin:0 0 6px;font-size:19px;color:var(--navy)}
+  .card h2 .arr{color:var(--dvblue)}
+  .card p{margin:0;font-size:13.5px;color:var(--slate);line-height:1.55}
+  footer{margin-top:42px;color:var(--slate);font-size:12px;border-top:1px solid var(--line);padding-top:18px}
 </style>
 </head>
 <body>
   <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span> Datavant · Tokenization</span>
     <h1>Configuration Builder</h1>
-    <p class="sub">Tokenization portal configuration — the UX redesign prototype and the developer hand-off. Reference-only: the prototype shows intended look &amp; behaviour; build with DART/UiKit components.</p>
+    <p class="sub">The Tokenization portal configuration redesign — an interactive prototype and a developer hand-off mapping every change to the code. Reference-only: the prototype shows intended look &amp; behaviour; production is built with DART / UiKit.</p>
+
     <div class="cards">
       <a class="card" href="config-page.html">
-        <span class="pill">PROTOTYPE</span>
-        <h2>Configuration prototype →</h2>
-        <p>Interactive walkthrough of the redesigned list, create wizard, detail/edit view, validation, sharing, and versioning.</p>
+        <div class="shot">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <iframe src="config-page.html#v=landing&embed=1" loading="lazy" title="Prototype preview"></iframe>
+          <span class="veil"></span>
+        </div>
+        <div class="body">
+          <span class="pill">PROTOTYPE</span>
+          <h2>Configuration prototype <span class="arr">→</span></h2>
+          <p>Interactive walkthrough of the redesigned list, create wizard, detail/edit view, validation, sharing, and versioning.</p>
+        </div>
       </a>
+
       <a class="card" href="Config-Improvements-Handoff.html">
-        <span class="pill">DEV HAND-OFF</span>
-        <h2>Improvements &amp; change→code map →</h2>
-        <p>IMP-01…30 with the real files to touch, DART components, dependencies, acceptance criteria, and Jira links (APP-3388…3416, APP-3436).</p>
+        <div class="shot">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <iframe src="Config-Improvements-Handoff.html" loading="lazy" title="Hand-off preview"></iframe>
+          <span class="veil"></span>
+        </div>
+        <div class="body">
+          <span class="pill">DEV HAND-OFF</span>
+          <h2>Improvements &amp; change→code map <span class="arr">→</span></h2>
+          <p>IMP-01…39 with the real files to touch, DART components, dependencies, acceptance criteria, live deep-linked references, and Jira links.</p>
+        </div>
       </a>
     </div>
+
     <footer>Datavant · Tokenization · Configuration Builder. Iterated in the working copy; published to GitHub Pages.</footer>
   </div>
 </body>

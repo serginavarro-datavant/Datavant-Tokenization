@@ -28,7 +28,7 @@
   .chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--slate);cursor:pointer}
   .chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
   /* grid */
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:20px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;transition:box-shadow .12s,transform .12s;display:block}
   .card:hover{box-shadow:0 6px 18px rgba(31,45,61,.10);transform:translateY(-1px);text-decoration:none}
   .card .cid{font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:700}
@@ -73,9 +73,18 @@
   a.file-link:hover{text-decoration:underline}
   a.ds.ds-link{text-decoration:none;cursor:pointer}
   a.ds.ds-link:hover{background:#dfeaf7}
+  /* Live, deep-linked, spotlighted reference. Full-width, non-interactive; hover+click opens full-size. */
+  .proto-embed{position:relative;width:100%;height:600px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 2px 10px rgba(31,45,61,.06);transition:box-shadow .15s}
+  .proto-embed:hover{box-shadow:0 8px 28px rgba(31,45,61,.18)}
+  .proto-embed iframe{width:200%;height:1200px;border:0;transform:scale(.5);transform-origin:top left;pointer-events:none}
+  .proto-open-layer{position:absolute;inset:0;z-index:2;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+  .proto-open-hint{opacity:0;transform:translateY(4px);transition:.15s;background:rgba(31,45,61,.9);color:#fff;font:600 13px/1 var(--font);padding:11px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  .proto-embed:hover .proto-open-hint{opacity:1;transform:translateY(0)}
   .shots{display:flex;flex-direction:column;gap:12px}
   .shot{max-width:100%;border:1px solid var(--line);border-radius:8px;display:block;background:#fff}
-  .card .thumb{width:100%;height:128px;object-fit:cover;object-position:top left;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff}
+  /* Live auto-updating snapshot thumbnail (lazy iframe, deep-linked to the IMP's state) */
+  .card .thumb-frame{position:relative;width:100%;height:270px;overflow:hidden;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;background:#fff}
+  .card .thumb-frame iframe{position:absolute;top:0;left:0;width:200%;height:1080px;border:0;transform:scale(.5);transform-origin:top left;pointer-events:none}
   .jira{font-family:var(--mono);font-weight:700}
   .jira-blk{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .jira-blk h4{margin:0}
@@ -386,15 +395,130 @@ const IMP = [
   ds:["UiKit Menu / Select (multi-select w/ checkboxes)","UiKit Combobox / typeahead (searchable Site)","SearchInput","Badge (Tokens count)"],
   deps:[["IMP-27","Version rows must stay filter-aware — expanded children shouldn't be hidden when the parent matches"],["IMP-28","Shares the list-row surface"]],
   ac:["Tokens multi-select filters to rows carrying ANY selected Core token; trigger shows a count badge + clear ✕","Site is a searchable select; box width fits the selection with ellipsis past the max; clear ✕ resets to All Sites","Search has a clear ✕ that empties the query and refocuses","Facets compose: name AND site AND (any token); clearing any one facet re-applies the rest"],
-  proto:"Open the Tokens dropdown and tick a few; type/pick in the Site box; use the ✕ on Tokens, Site, and Search to clear each."}
+  proto:"Open the Tokens dropdown and tick a few; type/pick in the Site box; use the ✕ on Tokens, Site, and Search to clear each."},
+
+ {id:"IMP-31",title:"Core tokens: auto-suggest on Input→Next + input-dependency errors",area:"Output / tokens",impact:"Add",effort:"M",pri:"P1",bucket:"state",
+  what:"On Input→Next (tokenizing modes), the token picker opens in a “suggest” mode: Core tab, every Core token the current input PII can generate is pre-selected; ungeneratable ones are disabled with a “Needs …” reason. Add merges (dedupes) into Output; Skip proceeds. No tokens are seeded without this consent. Separately, a Core token in Output whose required input was removed shows a field-level error (missing input chip flagged + “Missing in input”) and blocks Next until resolved.",
+  why:"Tokens are generated from input PII — users should see exactly what they can generate, and never ship a token whose inputs no longer exist.",
+  files:[["components/configWizard/AddTokensToConfigModal/*","Suggest mode + PII-based enable/disable."],["components/configWizard/ConfigWizardTokenSources.tsx","Token→input recipes."],["views/ConfigurationsTask.tsx","Input→Next trigger + Output token validation/gating."]],
+  ds:["UiKit Modal","Checkbox","Badge","AlertMessage"],
+  deps:[["IMP-21","Token modal PII gating"],["IMP-36","Token catalog"]],
+  ac:["Suggest modal pre-selects all generatable Core tokens; disabled show why","Add dedupes into Output","Removing a required input flags the token + blocks Next"],
+  proto:"Create flow → Input → Next opens the suggestion; remove a required input then go to Output to see the error."},
+
+ {id:"IMP-32",title:"Output “Null” → Onboarding “No values present”",area:"Onboarding",impact:"Modify",effort:"S",pri:"P2",bucket:"state",
+  what:"When an Output column's operation is Null, its Onboarding Data Type derives to “No values present” (which enables the Non-null Values validator). Switching the column to Passthrough restores its real data type. Mirrors real de-id: PHI passthrough columns are nulled; only tokens / the linking ID carry through.",
+  why:"Makes the Input → Output(op) → Onboarding cascade faithful and demoable for people who know the pipeline.",
+  files:[["components/configWizard/ConfigWizardOutputColumn.tsx","Operations (Null/Passthrough)."],["components/configWizard/ConfigWizardIngestionLayout.tsx","Onboarding data-type derivation."],["types/configsLayouts.ts","Data types."]],
+  ds:["—"],
+  deps:[["IMP-15","No values present data type"]],
+  ac:["Nulled output column → Onboarding type “No values present” + Non-null Values check","Passthrough restores the real type"],
+  proto:"Output: set a column to Null → Onboarding shows No values present."},
+
+ {id:"IMP-33",title:"Validation is internal (Datavanter-only)",area:"Onboarding / permissions",impact:"Modify",effort:"S",pri:"P2",bucket:"state",
+  what:"The Onboarding Validation column and validator management (Select/Manage Validators) are internal — visible only to Datavant (TS) users, hidden for customers. Prototype models this with a Customer/Datavanter role switch in the top bar (Customer default); production gates by role/ability.",
+  why:"Validators are a TS concern; surfacing them to customers is confusing and exposes internal controls.",
+  files:[["components/configWizard/ConfigWizardIngestionLayout.tsx","Validation column (gate by role)."],["components/configWizard/SelectValidatorsModal.tsx","Validator management."],["(ability/role)","useAbility / ROLES.IS_IN_DATAVANT_COMPANY, MANAGE_CONFIGURATIONS."]],
+  ds:["—"],
+  deps:[["IMP-16","Onboarding validation"]],
+  ac:["Customer: no Validation column, no Manage/Select Validators","Datavanter: full validation UI"],
+  proto:"Toggle the Role switch (top bar) between Customer and Datavanter on the Onboarding step."},
+
+ {id:"IMP-34",title:"Stepper navigation gating + optional “Run Test”",area:"Create wizard",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"Clicking a stepper step follows the same gating as Back/Next: past/current steps navigate freely, the immediate next step runs the same validation as Next, steps further ahead are disabled (no Input→Validate jump). Only the test run is optional: the Validate step is renamed “Run Test” and tagged Optional; its footer CTA reads Skip until a test is run, then Next.",
+  why:"Stop advancing past validation via the stepper; make clear the test run is optional while Format is required.",
+  files:[["views/ConfigurationsTask.tsx","Stepper nav + enableValidate / enableSaveWithoutValidation."],["designSystem/components/stepper/Stepper.tsx","DS stepper."]],
+  ds:["Stepper (designSystem)"],
+  deps:[["IMP-01","Stepper"],["IMP-05","Footer navigation"]],
+  ac:["Stepper can't jump past the next step","Errors/warnings block via the same dialog as Next","Run Test tagged Optional; CTA Skip→Next after a run"],
+  proto:"Walk the create stepper; try clicking a far step; reach Run Test and note Skip→Next."},
+
+ {id:"IMP-35",title:"Field-level error/warning styling + modal notification icons",area:"Validation",impact:"Modify",effort:"S",pri:"P2",bucket:"pres",
+  what:"Validation feedback is field-level, not whole-row tints: errors flag the specific field/chip in red with a short caption (e.g. “Missing in input”); warnings flag the specific control in amber (e.g. the unmapped Profile Model select) + caption (the “Not mapped” message is compacted with detail on hover). Confirm/alert modals show a type icon left of the title: red circled exclamation for errors, orange triangle for warnings.",
+  why:"Whole-row tints are heavy and ambiguous; pointing at the exact offending field is cleaner and more actionable.",
+  files:[["components/configWizard/ConfigurationValidationResults.tsx","Field-level callouts."],["(shared Modal/Dialog)","Type icon left of title."],["UiKit.AlertMessage","Warn/error styling."]],
+  ds:["UiKit AlertMessage","Modal"],
+  deps:[["IMP-07","Validation dialog"]],
+  ac:["Errors/warnings highlight the field, not the row","Modals carry the correct type icon (error/warning)"],
+  proto:"Trigger a unique-type error (Input) and an unmapped warning (Onboarding); open any confirm dialog."},
+
+ {id:"IMP-36",title:"Full token catalog (Core/Standard/Other + recipes)",area:"Output / tokens",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"One canonical token catalog drives both the Select Token modal and the list-view filter: Token 1–41 (no 32) + 101–111, grouped Core / Standard / Other with each token's input-column recipe; Other tokens carry tags (N = novel, U = unsupported). The list filter lists all token types grouped by category (not Core-only); the modal groups by the same categories and shows recipes.",
+  why:"One source of truth keeps picker and filter consistent and correct; doubles as a dev fixture.",
+  files:[["components/configWizard/AddTokensToConfigModal/*","Catalog source (id, category, recipe, tag)."],["(list-view filter)","Render grouped from the same catalog."]],
+  ds:["UiKit Menu / Select"],
+  deps:[["IMP-21","Token modal"],["IMP-30","List filter"]],
+  ac:["Filter and modal render the full grouped catalog from one source","Recipes shown","Other tags (N/U) surfaced"],
+  proto:"Open the list Tokens filter (grouped) and the Add Tokens modal (grouped + recipes)."},
+
+ {id:"IMP-37",title:"Name immutable after create; Settings vs Edit setup",area:"Detail / create",impact:"Modify",effort:"S",pri:"P2",bucket:"state",
+  what:"The configuration name is immutable once created (it's the run-time identity, and save keys on name+site → a rename would create a new config). Name/site are editable only for new / clone / draft. The setup affordance is “Settings” (gear, name locked) in the detail view, and “Edit setup” (pencil, name editable) during creation/clone/draft.",
+  why:"Matches the codebase (only new/clone render the name field; save PUT vs POST keys on name+site) and prevents an unsupported rename.",
+  files:[["views/ConfigurationsTask.tsx","Name field gated to ['new','clone']."],["api/configs.ts","PUT vs POST keyed on name+site."],["components/configWizard/RowActionsMenuButton.tsx","Edit only on latest."]],
+  ds:["UiKit.Button","System/Settings icon (DART)"],
+  deps:[["IMP-03","Read-only + Edit mode"]],
+  ac:["Name editable for new/clone/draft, locked for saved configs","Label/icon: Settings (gear) when saved, Edit setup (pencil) otherwise"],
+  proto:"Open a saved config → Edit → Settings (name locked). New/clone/draft → Edit setup (name editable)."},
+
+ {id:"IMP-38",title:"Clone as a prefilled create flow",area:"Create wizard",impact:"Modify",effort:"M",pri:"P2",bucket:"state",
+  what:"Clone opens a “Clone Settings” modal (empty, required name so the copy is deliberately named; site/mode prefilled; CTA Clone), then drops the user into the prefilled create wizard at Input to review/validate. It goes live only on Create, after which it's a normal config (name locked). Mirrors task:'clone', which reuses the create flow and POSTs a new config.",
+  why:"A clone is a new configuration, not an in-place edit — it must be named and validated before going live.",
+  files:[["components/configWizard/RowActionsMenuButton.tsx","Clone → navigate task:'clone'."],["views/ConfigurationsTask.tsx","Prefilled create flow."]],
+  ds:["Modal","Stepper","UiKit.Button"],
+  deps:[["IMP-37","Name rules"],["IMP-01","Stepper"]],
+  ac:["Clone → name modal (empty/required) → prefilled create wizard at Input","Live only on Create"],
+  proto:"List → row kebab → Clone → name it → walk the prefilled wizard."},
+
+ {id:"IMP-39",title:"Versioning: edit→new version, per-version view, Restore",area:"List view / detail",impact:"Add",effort:"L",pri:"P1",bucket:"state",
+  what:"Editing the latest version and saving creates a new version; the pre-save state is preserved as a restorable previous version (a row appears under the config; the version pill bumps). Each version shows its own state when opened. A previous (owned) version opens read-only with Restore this version (makes it the new latest — nothing overwritten), Clone, and Download test input — no Edit. Shared previous versions: Clone + Download only.",
+  why:"Mirrors the codebase: edit+save = a new version (PUT); restore brings an old version back as latest; previous versions aren't editable in place.",
+  files:[["api/configs.ts","PUT = new version."],["components/configWizard/ConfigVersionTable.tsx","Previous versions list."],["components/configWizard/RestoreConfigurationModal.tsx","Restore → new latest."],["components/configWizard/RowActionsMenuButton.tsx","Per-version action matrix (latest = restoreClickHandler===undefined)."]],
+  ds:["UiKit.DotsMenu","Modal","Badge (version)"],
+  deps:[["IMP-06","Save → version"],["IMP-27","Version rows"],["IMP-28","Per-version actions"]],
+  ac:["Edit+Save adds a previous version + bumps latest","Previous version read-only: Restore · Clone · Download, no Edit","Restore creates a new latest (nothing overwritten)"],
+  proto:"Open an owned config → Edit a field → Save (repeat) → back to the list to see versions; open a previous version."}
 ];
 
 // Visual references pulled from the source doc (Tokenization Workflow & Usability Improvements).
 const IMG = {"IMP-01": ["handoff-assets/IMP-01-1.png"], "IMP-02": ["handoff-assets/IMP-02-1.png", "handoff-assets/IMP-02-2.png", "handoff-assets/IMP-02-3.png"], "IMP-03": ["handoff-assets/IMP-03-1.png", "handoff-assets/IMP-03-2.png"], "IMP-04": ["handoff-assets/IMP-04-1.png", "handoff-assets/IMP-04-2.png"], "IMP-05": ["handoff-assets/IMP-05-1.png", "handoff-assets/IMP-05-2.png", "handoff-assets/IMP-05-3.png"], "IMP-06": ["handoff-assets/IMP-06-1.png", "handoff-assets/IMP-06-2.png"], "IMP-07": ["handoff-assets/IMP-07-1.png"], "IMP-08": ["handoff-assets/IMP-08-1.png"], "IMP-09": ["handoff-assets/IMP-09-1.png"], "IMP-10": ["handoff-assets/IMP-10-1.png"], "IMP-11": ["handoff-assets/IMP-11-1.png"], "IMP-12": ["handoff-assets/IMP-12-1.png"], "IMP-13": ["handoff-assets/IMP-13-1.png"], "IMP-14": ["handoff-assets/IMP-14-1.png"], "IMP-15": ["handoff-assets/IMP-15-1.png", "handoff-assets/IMP-15-2.png"], "IMP-16": ["handoff-assets/IMP-16-1.png"], "IMP-17": ["handoff-assets/IMP-17-1.png"], "IMP-18": ["handoff-assets/IMP-18-1.png"], "IMP-19": ["handoff-assets/IMP-19-1.png"], "IMP-20": ["handoff-assets/IMP-20-1.png"], "IMP-21": ["handoff-assets/IMP-21-1.png", "handoff-assets/IMP-21-2.png"], "IMP-22": ["handoff-assets/IMP-22-1.png"], "IMP-23": ["handoff-assets/IMP-23-1.png"], "IMP-24": ["handoff-assets/IMP-24-1.png", "handoff-assets/IMP-24-2.png"], "IMP-25": ["handoff-assets/IMP-25-1.png", "handoff-assets/IMP-25-2.png"], "IMP-26": ["handoff-assets/IMP-26-1.png"], "IMP-27": ["handoff-assets/IMP-27-1.png", "handoff-assets/IMP-27-2.png"], "IMP-28": ["handoff-assets/IMP-28-kebab.svg"], "IMP-29": ["handoff-assets/IMP-29-1.png", "handoff-assets/IMP-29-2.png"], "IMP-30": ["handoff-assets/IMP-30-1.png", "handoff-assets/IMP-30-2.png"]};
 
+// Deep links into the LIVE prototype per IMP: { v: landing|detail|create, tab, step, hl } — the
+// prototype reads these from the URL hash, navigates to the state, and spotlights the hl region.
+// This replaces re-shooting screenshots: change the prototype, the reference updates itself.
+const DEEP = {
+  "IMP-01":{v:"create",step:"input",hl:"stepper"}, "IMP-02":{v:"create",step:"confirm",hl:"footer"},
+  "IMP-03":{v:"detail",hl:"edit"}, "IMP-04":{act:"edit-detail"},
+  "IMP-05":{v:"create",step:"input",hl:"footer"}, "IMP-06":{act:"edit-detail",hl:"save"},
+  "IMP-07":{v:"create",step:"input",hl:"footer"}, "IMP-08":{act:"cancel-edit"},
+  "IMP-09":{act:"settings"}, "IMP-10":{v:"detail",tab:2,hl:"onboarding-grid"},
+  "IMP-11":{v:"detail",tab:4}, "IMP-12":{v:"detail"}, "IMP-13":{act:"view-shared"},
+  "IMP-14":{v:"create",step:"input",hl:"stepper"}, "IMP-15":{v:"detail",tab:2,hl:"onboarding-grid"},
+  "IMP-16":{v:"detail",tab:2}, "IMP-17":{v:"landing",hl:"versions"},
+  "IMP-18":{v:"landing"}, "IMP-19":{v:"landing",hl:"site-filter"}, "IMP-20":{v:"detail",tab:1,hl:"output-grid"},
+  "IMP-21":{act:"token-modal"}, "IMP-22":{v:"create",step:"input",hl:"input-grid"},
+  "IMP-23":{v:"landing"}, "IMP-24":{v:"detail"}, "IMP-25":{v:"landing",hl:"filters"},
+  "IMP-26":{v:"landing",hl:"versions"}, "IMP-27":{act:"expand-versions"}, "IMP-28":{act:"open-kebab"},
+  "IMP-29":{act:"run-test"}, "IMP-30":{v:"landing",hl:"filters"},
+  "IMP-31":{act:"token-suggest"}, "IMP-32":{v:"detail",tab:2,hl:"onboarding-grid"},
+  "IMP-33":{act:"role-validation"}, "IMP-34":{v:"create",step:"input",hl:"stepper"},
+  "IMP-35":{v:"detail",tab:1,hl:"output-grid"}, "IMP-36":{act:"token-filter"},
+  "IMP-37":{act:"settings"}, "IMP-38":{act:"clone"},
+  "IMP-39":{act:"expand-versions"}
+};
+function deepHash(i){
+  var d = DEEP[i.id] || {v:"landing"};
+  var parts = ["v=" + (d.v||"landing")];
+  if (d.tab != null) parts.push("tab=" + d.tab);
+  if (d.step) parts.push("step=" + d.step);
+  if (d.act) parts.push("act=" + d.act);   // drive the prototype to the exact state (modal/edit/etc.)
+  if (d.hl) parts.push("hl=" + d.hl);
+  parts.push("lbl=" + encodeURIComponent(i.id + " · " + i.title));
+  return parts.join("&");
+}
+
 // Jira implementation tickets (APP project, epic APP-3279).
 const JIRA_BASE = "https://datavant.atlassian.net/browse/";
-const JIRA = {"IMP-01":"APP-3388","IMP-02":"APP-3389","IMP-03":"APP-3390","IMP-04":"APP-3391","IMP-05":"APP-3392","IMP-06":"APP-3393","IMP-07":"APP-3394","IMP-08":"APP-3395","IMP-09":"APP-3396","IMP-10":"APP-3397","IMP-11":"APP-3398","IMP-12":"APP-3399","IMP-13":"APP-3400","IMP-14":"APP-3401","IMP-15":"APP-3402","IMP-16":"APP-3403","IMP-17":"APP-3404","IMP-18":"APP-3405","IMP-19":"APP-3406","IMP-20":"APP-3407","IMP-21":"APP-3408","IMP-22":"APP-3409","IMP-23":"APP-3410","IMP-24":"APP-3411","IMP-25":"APP-3412","IMP-26":"APP-3413","IMP-27":"APP-3414","IMP-28":"APP-3415","IMP-29":"APP-3416","IMP-30":"APP-3436"};
+const JIRA = {"IMP-01":"APP-3388","IMP-02":"APP-3389","IMP-03":"APP-3390","IMP-04":"APP-3391","IMP-05":"APP-3392","IMP-06":"APP-3393","IMP-07":"APP-3394","IMP-08":"APP-3395","IMP-09":"APP-3396","IMP-10":"APP-3397","IMP-11":"APP-3398","IMP-12":"APP-3399","IMP-13":"APP-3400","IMP-14":"APP-3401","IMP-15":"APP-3402","IMP-16":"APP-3403","IMP-17":"APP-3404","IMP-18":"APP-3405","IMP-19":"APP-3406","IMP-20":"APP-3407","IMP-21":"APP-3408","IMP-22":"APP-3409","IMP-23":"APP-3410","IMP-24":"APP-3411","IMP-25":"APP-3412","IMP-26":"APP-3413","IMP-27":"APP-3414","IMP-28":"APP-3415","IMP-29":"APP-3416","IMP-30":"APP-3436","IMP-31":"APP-3445","IMP-32":"APP-3446","IMP-33":"APP-3447","IMP-34":"APP-3448","IMP-35":"APP-3449","IMP-36":"APP-3450","IMP-37":"APP-3451","IMP-38":"APP-3452","IMP-39":"APP-3453"};
 
 // Design-system references point devs to the DART repo; portal_client source they already have locally.
 const DART = "https://github.com/datavant/dart/tree/main";
@@ -429,14 +553,14 @@ function renderHub(filter){
        ${RESOURCES.map(r=>`<a class="res" href="${r.href}" download="${r.dl}">${IC_DL}<span class="res-name">${r.name}</span><span class="res-file">${r.file}</span></a>`).join('')}
      </div>
    </section>
-   <p class="legend">Buckets — <b>Presentational</b>: maps onto existing components, low risk. <b>State / flow</b>: changes state/behaviour. <b>Cross-cutting</b>: needs an ADR before implementation. Click any card.</p>
+   <p class="legend">Each tile is a <b>live, deep-linked snapshot</b> of the prototype, focused on that change — quick-scan the grid, then open a card for the files to touch, DART/UiKit components, dependencies, acceptance criteria, and the Jira ticket. Previews auto-update with the prototype (no screenshots to maintain); hover a card's reference to open that exact state in a new tab.<br><br>Buckets — <b>Presentational</b>: maps onto existing components, low risk. <b>State / flow</b>: changes state/behaviour. <b>Cross-cutting</b>: needs an ADR before implementation.</p>
    <div class="filters">
      ${['all','pres','state','cross'].map(f=>`<span class="chip ${ (filter||'all')===f?'active':''}" data-f="${f}">${f==='all'?'All ('+IMP.length+')':BUCKETS[f].label+' ('+IMP.filter(i=>i.bucket===f).length+')'}</span>`).join('')}
    </div>
    <div class="grid">
      ${items.map(i=>`
        <a class="card" href="#/${i.id}">
-         ${(IMG[i.id]&&IMG[i.id].length)?`<img class="thumb" src="${IMG[i.id][0]}" alt="" loading="lazy" onerror="this.style.display='none'"/>`:''}
+         <div class="thumb-frame"><iframe loading="lazy" src="${PROTO}#${deepHash(i)}&embed=1" title="${i.id} preview" tabindex="-1" aria-hidden="true"></iframe></div>
          <div class="cid">${i.id}${JIRA[i.id]?` <span class="jira-chip">${JIRA[i.id]}</span>`:''}</div>
          <h3>${i.title}</h3>
          <div class="meta">
@@ -480,10 +604,15 @@ function renderDetail(i){
 
    ${isCross?`<div class="callout cross"><b>Cross-cutting — needs an ADR first.</b> Agree the design decision before writing implementation tickets; otherwise it gets reinvented per file.</div><div style="height:14px"></div>`:''}
 
-   ${(IMG[i.id]&&IMG[i.id].length)?`<section class="blk"><h4>Visual reference</h4>
-     <div class="shots">${IMG[i.id].map(src=>`<a href="${src}" target="_blank" rel="noopener"><img class="shot" src="${src}" alt="${i.id} reference" loading="lazy" onerror="this.closest('a').style.display='none'"/></a>`).join('')}</div>
-     <p style="margin-top:10px;color:var(--slate);font-size:12px">From the source doc. Click to open full size. Behaviour is live in the <a href="${PROTO}" target="_blank" rel="noopener">prototype</a>.</p>
-   </section>`:''}
+   <section class="blk"><h4>Live reference</h4>
+     <div class="proto-embed">
+       <iframe src="${PROTO}#${deepHash(i)}&embed=1" loading="lazy" title="${i.id} live reference"></iframe>
+       <a class="proto-open-layer" href="${PROTO}#${deepHash(i)}" target="_blank" rel="noopener" aria-label="Open reference in a new tab">
+         <span class="proto-open-hint">Open reference ↗</span>
+       </a>
+     </div>
+     <p style="margin-top:10px;color:var(--slate);font-size:12px">Live reference for this change, spotlighted in context. Hover and click to open it full-size in a new tab. Always current — nothing to re-screenshot.</p>
+   </section>
 
    <section class="blk"><h4>What changes</h4><p>${i.what}</p></section>
    <section class="blk"><h4>Why</h4><p>${i.why}</p></section>

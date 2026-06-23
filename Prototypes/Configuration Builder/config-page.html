@@ -362,6 +362,7 @@
     .tf-panel { position: absolute; top: 38px; left: 0; z-index: 40; display: none; background: var(--bg-white); border: 1px solid var(--border-default); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.12); padding: 6px; min-width: 220px; max-height: 70vh; overflow-y: auto; }
     .tf-panel.open { display: block; }
     .tf-head { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-dimmed); font-weight: 700; padding: 6px 8px 4px; }
+    .tf-head ~ .tf-head { margin-top: 4px; border-top: 1px solid var(--border-mild); padding-top: 8px; }
     .tf-opt { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px; font-size: 13px; color: var(--color-text); cursor: pointer; }
     .tf-opt:hover { background: var(--bg-mild); }
     .tf-opt input { cursor: pointer; }
@@ -670,6 +671,8 @@
     .wiz-stepper-wrap { padding: 16px 28px 6px; }
     .dart-stepper { display: flex; align-items: center; gap: 0; }
     .dart-step { display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; }
+    /* Steps beyond the immediate next aren't reachable yet (advance via Next / the next step). */
+    .dart-step.step-locked { cursor: not-allowed; opacity: .5; pointer-events: none; }
     .dart-step-ind {
       width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
@@ -680,6 +683,8 @@
     .dart-step-ind.complete { background: var(--color-primary); color: #fff; }
     .dart-step-title { font-size: 14px; font-weight: 600; color: var(--color-text); white-space: nowrap; }
     .dart-step.incomplete .dart-step-title { color: var(--color-dimmed); font-weight: 500; }
+    .dart-step-label { display: inline-flex; flex-direction: column; line-height: 1.15; }
+    .dart-step-optional { font-size: 9px; letter-spacing: .05em; text-transform: uppercase; font-weight: 600; color: var(--color-dimmed); margin-top: 1px; }
     .dart-step-sep { flex: 1 1 auto; min-width: 20px; height: 1px; margin: 0 12px; border-top: 1px dashed var(--border-default); }
     .dart-step-sep.complete { border-top: 1px solid var(--color-primary); }
 
@@ -755,7 +760,7 @@
     }
     .ro .icon-btn-delete, .ro .drag-handle, .ro .grid-actions, .ro .add-row-tr,
     .ro .bulk-bar, .ro .import-bar, .ro .op-add, .ro .op-remove,
-    .ro input[type="checkbox"], .ro .ob-val-status,
+    .ro input[type="checkbox"], .ro .ob-val-edit,
     .ro .col-check, .ro #sharing-cta-bar { display: none !important; }
     /* No drag-to-reorder in the detail view — column order is fixed once a config exists. */
     .detail-view .drag-handle { display: none !important; }
@@ -850,27 +855,36 @@
     .tok-table tbody tr:hover { background:var(--bg-mild); }
     .tok-check-col { width:36px; }
     .tok-table .chip { background:var(--color-primary-light); border-color:#c9d0ff; }
+    .tok-suggest-note { background:var(--color-primary-light); border:1px solid #c9d0ff; color:#1a2a7a; font-size:12px; line-height:1.5; padding:10px 12px; border-radius:8px; margin-bottom:12px; }
+    /* Output token row whose required input was removed */
+    /* Field-level highlight: only the missing input chip is flagged (no whole-row tint). */
+    .chip.chip-missing { background: var(--color-error-bg); border-color: var(--color-error); color: var(--color-error); }
     .tok-empty { text-align:center; color:var(--color-dimmed); padding:24px 8px; }
     .tok-footer { justify-content:flex-start; }
     .tok-count { font-size:12px; color:var(--color-dimmed); }
 
     /* onboarding: profile-model mapping */
-    .ob-map-cell .ob-map { min-width:150px; max-width:230px; }
+    .ob-map-cell .ob-map { min-width:268px; max-width:320px; }
     .ob-token-map { color:var(--color-dimmed); font-size:12px; }
-    #onboarding-tbody tr.ob-row-unmapped td { background:#FEF7D6; }
+    /* Field-level warning: flag the mapping select, not the whole row. */
+    #onboarding-tbody tr.ob-row-unmapped .ob-map { border-color:#d9a407; box-shadow:0 0 0 2px #FEF7D6; }
     .ob-warn { margin-top:6px; }
     .ob-warn-msg { font-size:11px; color:#87690B; }
     #onboarding-tbody tr.ob-row-ackd .ob-warn-msg { color:var(--color-dimmed); }
     .ob-ack-label { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--color-text); margin-top:4px; cursor:pointer; }
     /* onboarding validation column */
-    .ob-val { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
-    .ob-val-status { background:none; border:none; cursor:pointer; font-size:12px; font-weight:600; padding:0; white-space:nowrap; }
-    .ob-val.val-on .ob-val-status { color:#12805c; }
-    .ob-val.val-off .ob-val-status { color:#d92d20; }
+    .ob-val { display:flex; flex-direction:column; align-items:flex-start; gap:7px; }
+    .ob-val-row { display:inline-flex; align-items:center; gap:8px; }
+    /* Status is a (non-interactive) pill; editing is an explicit button with a sliders icon. */
+    .ob-val-badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+    .ob-val-badge.on { background:#e6f5ef; color:#12805c; }
+    .ob-val-badge.off { background:#FEF7D6; color:#87690B; }
+    .ob-val-edit { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--color-primary); background:var(--bg-white); border:1px solid var(--border-default); border-radius:6px; padding:3px 9px; cursor:pointer; white-space:nowrap; }
+    .ob-val-edit:hover { background:var(--color-primary-light); border-color:#c9d0ff; }
     .ob-val-chips { display:inline-flex; flex-wrap:wrap; gap:6px; }
     .ob-chip { font-size:11px; padding:2px 8px; border-radius:6px; background:var(--bg-mild); border:1px solid var(--border-default); color:var(--color-text); white-space:nowrap; }
-    .ob-chip.off { background:#FEF7D6; border-color:#FEE57E; color:#87690B; }
-    .ob-chip.off::before { content:'⚠ '; }
+    /* A disabled check recedes (muted + struck through) — the amber status pill carries the signal. */
+    .ob-chip.off { background:transparent; border-color:var(--border-mild); color:var(--color-dimmed); text-decoration:line-through; text-decoration-color:#b8bfca; }
     .ob-dt-warn { font-size:11px; color:#87690B; background:#FEF7D6; border:1px solid #FEE57E; border-radius:6px; padding:1px 6px; cursor:help; white-space:nowrap; }
     .hdr-info { color: var(--color-dimmed); cursor: help; margin-left: 4px; display: inline-flex; vertical-align: middle; }
     .hdr-info svg { display: block; }
@@ -1006,6 +1020,8 @@
       padding: 16px 24px; border-bottom: 1px solid var(--border-mild);
     }
     .modal-title { font-size: 16px; font-weight: 600; color: var(--color-text); }
+    .modal-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .modal-type-icon { display: inline-flex; align-items: center; flex: 0 0 auto; }
     .modal-close {
       background: none; border: none; cursor: pointer;
       color: var(--color-dimmed); font-size: 18px; line-height: 1;
@@ -1056,6 +1072,7 @@
     .setup-field .form-hint { margin-top: 5px; }
     .setup-field .radio-group { margin-top: 8px; }
     input[type="text"].setup-input { width: 100%; }
+    input[type="text"].setup-input.locked { background: var(--bg-mild); color: var(--color-dimmed); cursor: not-allowed; }
     .setup-field .form-select { width: 100%; }
     .modal-divider { border: none; border-top: 1px solid var(--border-mild); }
     .modal-upload-row {
@@ -1332,6 +1349,14 @@
   .cb-tbtn:hover{background:rgba(255,255,255,.18);color:#fff}
   .cb-tbtn.on{background:#2B6CB0;border-color:#2B6CB0;color:#fff}
   .cb-tbtn #cbCount{background:rgba(255,255,255,.28);border-radius:10px;padding:0 6px;font-size:11px}
+  .cb-role-wrap{display:inline-flex;align-items:center;gap:6px;color:#94a3b8;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;text-transform:uppercase;letter-spacing:.04em}
+  .cb-role{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:7px;padding:5px 8px;font:600 12px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer;text-transform:none;letter-spacing:0}
+  .cb-role option{color:#1F2D3D}
+  .cb-sep{width:1px;height:18px;background:rgba(255,255,255,.18)}
+  /* Validation is internal (Datavant TS). Hidden for the Customer role. */
+  body.role-customer .ob-val-th,
+  body.role-customer .ob-val-cell,
+  body.role-customer .ob-val-manage{display:none !important}
   body{padding-top:40px}
   .sidebar{top:40px;height:calc(100vh - 40px)}
   /* Comment layer */
@@ -1358,12 +1383,31 @@
 <div class="cb-topbar">
   <a class="cb-home" href="index.html">&#8592; Configuration Builder</a>
   <div class="cb-tools">
+    <label class="cb-role-wrap" title="Switch the viewer role. Validation is internal — only Datavanters (TS) see it.">Role
+      <select id="cb-role" class="cb-role" onchange="setRole(this.value)">
+        <option value="customer" selected>Customer</option>
+        <option value="datavanter">Datavanter (TS)</option>
+      </select>
+    </label>
+    <span class="cb-sep"></span>
     <button id="cbAddBtn" class="cb-tbtn" type="button" onclick="cbToggleAdd()">Comment</button>
     <button id="cbShowBtn" class="cb-tbtn" type="button" onclick="cbToggleShow()">Hide</button>
     <button class="cb-tbtn" type="button" onclick="cbOpenAll()">All <span id="cbCount">0</span></button>
     <span class="cb-where">Prototype</span>
   </div>
 </div>
+<script>
+  // Prototype-only role switch. Customer (default) hides the internal Validation column + its
+  // Manage Validators / Select Validators flow; Datavanter (TS) reveals them. Driven by a body class.
+  function setRole(r){
+    r = (r === 'datavanter') ? 'datavanter' : 'customer';
+    document.body.classList.toggle('role-customer', r === 'customer');
+    document.body.classList.toggle('role-datavanter', r === 'datavanter');
+    var sel = document.getElementById('cb-role'); if (sel && sel.value !== r) sel.value = r;
+    if (typeof closeValidators === 'function' && r === 'customer') closeValidators(); // close any open validators modal
+  }
+  setRole('customer');
+</script>
 <div class="page-shell">
 
   <!-- ══ SIDEBAR ══ -->
@@ -1519,7 +1563,7 @@
                 <svg class="cb-chev" width="11" height="7" viewBox="0 0 12 8" fill="none" stroke="#606a78" stroke-width="1.5"><path d="M1.5 2l4.5 4 4.5-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </div>
-            <div class="tf-panel" id="tf-panel"><div class="tf-head">Core tokens</div></div>
+            <div class="tf-panel" id="tf-panel"></div>
           </div>
           <div class="sf" id="sf">
             <input type="text" id="site-filter-input" class="sf-input" placeholder="All Sites" autocomplete="off" onfocus="sfFocus()" oninput="sfInput()" onclick="sfFocus()" aria-label="Filter by site"/>
@@ -2292,8 +2336,8 @@
             </button>
             <!-- Group 1 — Edit setup, Clone -->
             <button class="btn btn-secondary btn-sm" id="btn-editsetup" onclick="openSetup(true)" style="display:none">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-9 9H2v-3L11 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Edit setup
+              <span id="editsetup-icon" style="display:inline-flex"></span>
+              <span id="editsetup-label">Settings</span>
             </button>
             <button class="btn btn-secondary btn-sm" id="btn-clone" onclick="cloneConfig()" style="display:none">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5" stroke-linecap="round"/></svg>
@@ -2314,6 +2358,11 @@
               Share
             </button>
             <span class="wh-sep" id="wh-sep-2" style="display:none"></span>
+            <!-- Restore this version — only when viewing a previous (owned) version -->
+            <button class="btn btn-primary btn-sm" id="btn-restore" onclick="restoreOpenedVersion()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.2 5.2A5.5 5.5 0 1 1 2.5 8" stroke-linecap="round"/><path d="M2 3v3h3" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 5.3V8l2 1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Restore this version
+            </button>
             <!-- Group 3 — Revert to original, Delete -->
             <button class="btn btn-secondary btn-sm" id="btn-revert" onclick="openRevertModal()" style="display:none">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8a5 5 0 1 1 1.6 3.7" stroke-linecap="round"/><path d="M3 4.5V8h3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2526,7 +2575,7 @@
                   <button class="bulk-clear" onclick="onboardingBulkCancel()" aria-label="Clear selection" title="Clear selection"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
                   <span class="bulk-count"><span id="onboarding-bulk-n">0</span> selected</span>
                   <span class="bulk-spacer"></span>
-                  <button class="btn btn-secondary btn-sm" onclick="openValidatorsBulk()">Manage Validators</button>
+                  <button class="btn btn-secondary btn-sm ob-val-manage" onclick="openValidatorsBulk()">Manage Validators</button>
                   <button class="btn btn-danger btn-sm" onclick="onboardingBulkDelete()">Delete</button>
                 </div>
                 <div style="overflow-x:auto">
@@ -2541,7 +2590,7 @@
                         <th>Onboarding Column Name <span class="hdr-info" data-tip="List columns in the same order as your table — wrong order can fail onboarding."><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><rect x="7.4" y="7" width="1.2" height="4" rx=".6" fill="currentColor"/><circle cx="8" cy="4.9" r=".85" fill="currentColor"/></svg></span></th>
                         <th>Data Types <span class="hdr-info" data-tip="Data-Onboarding-only: pick each column's type here. Tokenizing modes: derived from Input/Output (read-only). 'Unspecified' means the type isn't set."><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><rect x="7.4" y="7" width="1.2" height="4" rx=".6" fill="currentColor"/><circle cx="8" cy="4.9" r=".85" fill="currentColor"/></svg></span></th>
                         <th>Profile Model Mapping <span class="hdr-info" data-tip="Maps columns to the HIPAA-certified Profile Model — required for Match and Assess. No match, choose Do Not Map."><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><rect x="7.4" y="7" width="1.2" height="4" rx=".6" fill="currentColor"/><circle cx="8" cy="4.9" r=".85" fill="currentColor"/></svg></span></th>
-                        <th>Validation <span class="hdr-info" data-tip="Tables are checked for SSNs, rare dates, tokens, and null values. Disable a check only when safe."><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><rect x="7.4" y="7" width="1.2" height="4" rx=".6" fill="currentColor"/><circle cx="8" cy="4.9" r=".85" fill="currentColor"/></svg></span></th>
+                        <th class="ob-val-th">Validation <span class="hdr-info" data-tip="Tables are checked for SSNs, rare dates, tokens, and null values. Disable a check only when safe."><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><rect x="7.4" y="7" width="1.2" height="4" rx=".6" fill="currentColor"/><circle cx="8" cy="4.9" r=".85" fill="currentColor"/></svg></span></th>
                         <th></th>
                       </tr>
                     </thead>
@@ -2938,10 +2987,11 @@
 <div class="modal-overlay" id="token-modal" onclick="handleTokenOverlay(event)">
   <div class="modal tok-modal">
     <div class="modal-header">
-      <div class="modal-title">Select Token</div>
-      <button class="modal-close" onclick="closeTokenModal()">✕</button>
+      <div class="modal-title" id="token-modal-title">Select Token</div>
+      <button class="modal-close" onclick="tokenModalCancel()">✕</button>
     </div>
     <div class="modal-body tok-body">
+      <div class="tok-suggest-note" id="token-suggest-note" style="display:none">Based on your input columns, these Core tokens can be generated and are pre‑selected. Tokens you can’t generate yet are disabled. Add them to your Output, or skip.</div>
       <div class="tok-search">
         <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M12.8053 13.5024L7.91159 8.60654C7.50044 8.92279 7.04844 9.16384 6.55559 9.3297C6.06276 9.49556 5.55998 9.57849 5.04728 9.57849C3.77664 9.57849 2.69803 9.13502 1.81144 8.24806C0.924859 7.36108 0.481567 6.28469 0.481567 5.01889C0.481567 3.7531 0.924324 2.67602 1.80984 1.78766C2.69534 0.899313 3.77172 0.455139 5.03898 0.455139C6.30625 0.455139 7.38405 0.899084 8.2724 1.78697C9.16075 2.67485 9.60492 3.75259 9.60492 5.0202C9.60492 5.55203 9.51759 6.06544 9.34292 6.56041C9.16824 7.05538 8.93159 7.50029 8.63298 7.89512L13.5288 12.7788L12.8053 13.5024ZM5.04325 8.57933C6.04059 8.57933 6.88367 8.23542 7.5725 7.5476C8.26134 6.85979 8.60576 6.01604 8.60576 5.01635C8.60576 4.01665 8.26134 3.17306 7.5725 2.48556C6.88367 1.79806 6.03992 1.45431 5.04125 1.45431C4.04259 1.45431 3.1995 1.79822 2.512 2.48604C1.8245 3.17386 1.48075 4.01761 1.48075 5.01729C1.48075 6.01698 1.82462 6.86058 2.51234 7.54808C3.20006 8.23558 4.0437 8.57933 5.04325 8.57933Z" fill="currentColor"/></svg>
         <input type="text" id="token-search" placeholder="Search Token name and fields e.g. first name" oninput="renderTokenList()" />
@@ -2961,8 +3011,8 @@
     <div class="modal-footer tok-footer">
       <span class="tok-count" id="token-count">0 Tokens Selected</span>
       <span class="bulk-spacer"></span>
-      <button class="btn btn-secondary" onclick="closeTokenModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmTokenSelect()">Select</button>
+      <button class="btn btn-secondary" id="token-cancel-btn" onclick="tokenModalCancel()">Cancel</button>
+      <button class="btn btn-primary" id="token-confirm-btn" onclick="confirmTokenSelect()">Select</button>
     </div>
   </div>
 </div>
@@ -3013,12 +3063,12 @@
     <div class="modal-body">
       <!-- Step 1: name / site / mode -->
       <div id="setup-step1">
-        <p class="setup-intro">Name your configuration, choose its site, and pick a mode to get started. You can refine everything in the next step.</p>
+        <p class="setup-intro" id="setup-intro-main">Name your configuration, choose its site, and pick a mode to get started. You can refine everything in the next step.</p>
 
         <div class="setup-field">
-          <label class="form-label" for="setup-name">Configuration Name <span style="color:var(--color-error)">*</span></label>
+          <label class="form-label" for="setup-name">Configuration Name <span class="setup-req" style="color:var(--color-error)">*</span></label>
           <input type="text" id="setup-name" class="setup-input" placeholder="my_config_name" oninput="validateSetup()" />
-          <div class="form-hint">Used to select this configuration when running Datavant software.</div>
+          <div class="form-hint" id="setup-name-hint">Used to select this configuration when running Datavant software.</div>
         </div>
 
         <div class="setup-field">
@@ -3067,7 +3117,7 @@
 <div class="modal-overlay" id="confirm-modal" onclick="handleConfirmOverlay(event)">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title" id="confirm-title">Leave without saving?</div>
+      <div class="modal-head-left"><span class="modal-type-icon" id="confirm-type-icon" style="display:none"></span><div class="modal-title" id="confirm-title">Leave without saving?</div></div>
       <button class="modal-close" onclick="closeConfirm()">✕</button>
     </div>
     <div class="modal-body">
@@ -3150,7 +3200,7 @@
 <div class="modal-overlay" id="revert-modal" onclick="handleRevertOverlay(event)">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title">Revert Configuration</div>
+      <div class="modal-head-left"><span class="modal-type-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3.4l9 15.6a1 1 0 0 1-.87 1.5H3.87A1 1 0 0 1 3 19L12 3.4z" fill="#fff4e5" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 9.2v4.3" stroke="#d97706" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.1" fill="#d97706"/></svg></span><div class="modal-title">Revert Configuration</div></div>
       <button class="modal-close" onclick="closeRevertModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -3167,12 +3217,12 @@
 <div class="modal-overlay" id="delcol-modal" onclick="handleDelColOverlay(event)">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title">⚠ Delete Columns</div>
+      <div class="modal-head-left"><span class="modal-type-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3.4l9 15.6a1 1 0 0 1-.87 1.5H3.87A1 1 0 0 1 3 19L12 3.4z" fill="#fff4e5" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 9.2v4.3" stroke="#d97706" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.1" fill="#d97706"/></svg></span><div class="modal-title">Delete Columns</div></div>
       <button class="modal-close" onclick="closeDelCol()">✕</button>
     </div>
     <div class="modal-body">
       <p class="setup-intro" id="delcol-msg">1 selected column will be removed from your configuration.</p>
-      <p class="warn-sub" style="font-size:12px">⚠ This action cannot be undone.</p>
+      <p class="warn-sub" style="font-size:12px">This action cannot be undone.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-white" onclick="closeDelCol()">Cancel</button>
@@ -3185,7 +3235,7 @@
 <div class="modal-overlay" id="confirmsave-modal" onclick="handleConfirmSaveOverlay(event)">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title">Confirm Before Saving</div>
+      <div class="modal-head-left"><span class="modal-type-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3.4l9 15.6a1 1 0 0 1-.87 1.5H3.87A1 1 0 0 1 3 19L12 3.4z" fill="#fff4e5" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 9.2v4.3" stroke="#d97706" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.1" fill="#d97706"/></svg></span><div class="modal-title">Confirm Before Saving</div></div>
       <button class="modal-close" onclick="closeConfirmSave()">✕</button>
     </div>
     <div class="modal-body">
@@ -3402,22 +3452,65 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
 
   // ── Tokens multi-select filter ──
   // Real Core token set (source recipes shown as hover tooltips, not inline — keeps the filter scannable).
-  var CORE_TOKENS = [
-    {v:'token_1',   l:'Token 1',   src:'Last Name + First Name (First Character) + Gender + DOB'},
-    {v:'token_2',   l:'Token 2',   src:'Last Name Soundex + First Name Soundex + Gender + DOB'},
-    {v:'token_5',   l:'Token 5',   src:'SSN + Gender + DOB'},
-    {v:'token_101', l:'Token 101', src:'Last Name + First Name (Confident Resolution) + DOB'},
-    {v:'token_102', l:'Token 102', src:'Last Name + First Name (Fuzzy Resolution) + DOB'},
-    {v:'token_103', l:'Token 103', src:'Last Name + First Name (Fuzzy Resolution, Metaphone) + DOB'},
-    {v:'token_104', l:'Token 104', src:'Last Name + First Name (Confident Resolution) + Address (Standardized) + ZIP5'},
-    {v:'token_105', l:'Token 105', src:'Last Name + First Name (Fuzzy Resolution) + Address (Standardized) + ZIP5'},
-    {v:'token_106', l:'Token 106', src:'Last Name + First Name (Fuzzy Resolution, Metaphone) + DOB + ZIP3'},
-    {v:'token_107', l:'Token 107', src:'First Name (Confident Resolution) + Cell Phone Number (US)'},
-    {v:'token_108', l:'Token 108', src:'First Name (Fuzzy Resolution) + Cell Phone Number (US)'},
-    {v:'token_109', l:'Token 109', src:'DOB + Cell Phone Number (US)'},
-    {v:'token_110', l:'Token 110', src:'DOB + Email'},
-    {v:'token_111', l:'Token 111', src:'First Name (Fuzzy Resolution) + Email'}
+  // ── Canonical token catalog (SINGLE SOURCE OF TRUTH) ──
+  // Every token's category (core / standard / other) + its input-column recipe. Drives the Select
+  // Token modal, the Input→Next Core suggestion, the per-row validation, and the list-view filter.
+  // tag: N = novel, U = unsupported. note: informal family (novel / oddball). Token 32 doesn't exist.
+  var TOKEN_DEFS = [
+    {id:1,   cat:'core', fields:['Last Name','First Name (First Character)','Gender','DOB']},
+    {id:2,   cat:'core', fields:['Last Name Soundex','First Name Soundex','Gender','DOB']},
+    {id:5,   cat:'core', fields:['SSN','Gender','DOB']},
+    {id:101, cat:'core', fields:['Last Name','First Name (Confident Resolution)','DOB']},
+    {id:102, cat:'core', fields:['Last Name','First Name (Fuzzy Resolution)','DOB']},
+    {id:103, cat:'core', fields:['Last Name','First Name (Fuzzy Resolution, Metaphone)','DOB']},
+    {id:104, cat:'core', fields:['Last Name','First Name (Confident Resolution)','Address (Standardized)','ZIP5']},
+    {id:105, cat:'core', fields:['Last Name','First Name (Fuzzy Resolution)','Address (Standardized)','ZIP5']},
+    {id:106, cat:'core', fields:['Last Name','First Name (Fuzzy Resolution, Metaphone)','DOB','ZIP3']},
+    {id:107, cat:'core', fields:['First Name (Confident Resolution)','Cell Phone Number (US)']},
+    {id:108, cat:'core', fields:['First Name (Fuzzy Resolution)','Cell Phone Number (US)']},
+    {id:109, cat:'core', fields:['DOB','Cell Phone Number (US)']},
+    {id:110, cat:'core', fields:['DOB','Email']},
+    {id:111, cat:'core', fields:['First Name (Fuzzy Resolution)','Email']},
+    {id:3,  cat:'standard', fields:['Last Name','First Name','DOB','ZIP3']},
+    {id:4,  cat:'standard', fields:['Last Name','First Name','Gender','DOB']},
+    {id:6,  cat:'standard', fields:['Last Name','First Name (First 3 Characters)','Gender','DOB','ZIP3']},
+    {id:7,  cat:'standard', fields:['Last Name','First Name (First 3 Characters)','Gender','DOB']},
+    {id:8,  cat:'standard', fields:['Last Name','First Name (First 3 Characters)','Gender','ZIP5']},
+    {id:9,  cat:'standard', fields:['First Name','Address']},
+    {id:12, cat:'standard', fields:['Last Name','First Name','Gender','ZIP5']},
+    {id:14, cat:'standard', fields:['Address','ZIP5','DOB']},
+    {id:15, cat:'standard', fields:['Address','ZIP5','DOB','Gender']},
+    {id:16, cat:'standard', fields:['SSN','First Name']},
+    {id:17, cat:'standard', fields:['Last Name','First Name','Address','ZIP5']},
+    {id:18, cat:'standard', fields:['Last Name','First Name','Gender','ZIP5','Birth Year','Birth Month']},
+    {id:23, cat:'standard', fields:['Last Name','First Name (First Character)','DOB','ZIP3']},
+    {id:24, cat:'standard', fields:['Last Name Soundex','First Name Soundex','DOB','ZIP3']},
+    {id:25, cat:'standard', fields:['First Name','Last Name','DOB','Gender','ZIP2']},
+    {id:26, cat:'standard', fields:['Last Name','First Name','DOB','ZIP5']},
+    {id:29, cat:'standard', fields:['First Name','Email']},
+    {id:30, cat:'standard', fields:['First Name','Cell Phone Number (US)']},
+    {id:10, cat:'other', tag:'N', note:'novel',   fields:['Last Name','First Name (First 3 Characters)','Gender','ZIP3']},
+    {id:11, cat:'other', tag:'N', note:'novel',   fields:['Last Name','First Name','Gender','ZIP3']},
+    {id:13, cat:'other', tag:'N', note:'novel',   fields:['Last Name','Middle Name (First Character)','First Name','Gender','ZIP3']},
+    {id:19, cat:'other', tag:'N', note:'novel',   fields:['Gender','DOB','ZIP3']},
+    {id:20, cat:'other', note:'oddball', fields:['Gender','DOB','ZIP5']},
+    {id:21, cat:'other', note:'oddball', fields:['Email']},
+    {id:22, cat:'other', note:'oddball', fields:['Cell Phone Number (US)']},
+    {id:27, cat:'other', note:'oddball', fields:['First Name','Address','ZIP5','DOB']},
+    {id:28, cat:'other', note:'oddball', fields:['First Name','Address','ZIP5','DOB','Gender']},
+    {id:31, cat:'other', note:'oddball', fields:['SSN']},
+    {id:33, cat:'other', note:'oddball', fields:['Source Patient ID','ZIP5']},
+    {id:34, cat:'other', note:'oddball', fields:['Last Name','First Name','Middle Name (First Character)','DOB']},
+    {id:35, cat:'other', tag:'U', note:'oddball', fields:['Maiden Name','First Name','Gender','DOB']},
+    {id:36, cat:'other', tag:'U', note:'oddball', fields:['Last Name','First Name (First Character)','DOB']},
+    {id:37, cat:'other', tag:'U', note:'oddball', fields:['Last Name Soundex','First Name Soundex','DOB']},
+    {id:38, cat:'other', note:'oddball', fields:['Last Name','First Name','DOB']},
+    {id:39, cat:'other', note:'oddball', fields:['SSN','DOB']},
+    {id:40, cat:'other', tag:'U', note:'oddball', fields:['Last Name','First Name','DOB','State']},
+    {id:41, cat:'other', tag:'U', note:'oddball', fields:['Last Name','First Name (First Character)','DOB','State']}
   ];
+  function tokensByCat(cat){ return TOKEN_DEFS.filter(function(t){ return t.cat === cat; }); }
+  function tokenLabel(t){ return 'Token ' + t.id + (t.tag ? ' (' + t.tag + ')' : ''); }
   function tfSelected(){ return Array.from(document.querySelectorAll('#tf-panel input:checked')).map(function(c){ return c.value; }); }
   function tfToggle(){ var p=document.getElementById('tf-panel'); var open=p.classList.toggle('open'); document.getElementById('tf-trigger').classList.toggle('active', open); }
   function tfTriggerClick(e){ if(e.target.closest('.tf-clear')) return; tfToggle(); }
@@ -3433,16 +3526,20 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   function tfInit(){
     var p=document.getElementById('tf-panel');
     if(p && !p.dataset.ready){
-      p.insertAdjacentHTML('beforeend', CORE_TOKENS.map(function(t){
-        return '<label class="tf-opt" title="'+t.src+'"><input type="checkbox" value="'+t.v+'" onchange="tfChange()">'+t.l+'</label>';
-      }).join(''));
+      // Grouped by category so it's clear which tokens are Core vs Standard vs Other.
+      var groups=[['core','Core tokens'],['standard','Standard tokens'],['other','Other tokens']];
+      p.innerHTML = groups.map(function(g){
+        return '<div class="tf-head">'+g[1]+'</div>' + tokensByCat(g[0]).map(function(t){
+          return '<label class="tf-opt" title="'+t.fields.join(' + ')+'"><input type="checkbox" value="token_'+t.id+'" onchange="tfChange()">'+tokenLabel(t)+'</label>';
+        }).join('');
+      }).join('');
       p.dataset.ready='1';
     }
-    // Seed each config row with a deterministic mock set of CORE tokens it "uses".
+    // Seed each config row with a deterministic mock set of tokens it "uses" (any type).
     document.querySelectorAll('#configs-tbody .parent-row').forEach(function(row, i){
       if(row.dataset.tokens !== undefined) return;
-      var toks = CORE_TOKENS.filter(function(t, j){ return ((i + 1) * (j + 2)) % 3 === 0 || (i + j) % 4 === 0; }).map(function(t){ return t.v; });
-      if(!toks.length) toks = [CORE_TOKENS[i % CORE_TOKENS.length].v];
+      var toks = TOKEN_DEFS.filter(function(t, j){ return ((i + 1) * (j + 2)) % 5 === 0 || (i + j) % 7 === 0; }).map(function(t){ return 'token_'+t.id; });
+      if(!toks.length) toks = ['token_'+TOKEN_DEFS[i % TOKEN_DEFS.length].id];
       row.dataset.tokens = toks.join(',');
     });
   }
@@ -3624,7 +3721,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   // (in-place). Not offered for drafts (real product gates View behind !isDraft → Continue/Edit instead).
   var ACTIONS_BY_CAT = {
     'owned-latest':  ['opentab', 'edit', 'clone', 'share', 'download', 'delete'],
-    'owned-version': ['opentab', 'clone', 'restore'],
+    'owned-version': ['opentab', 'restore', 'clone', 'download'],
     'shared-latest': ['opentab', 'clone'],
     'shared-version':['opentab', 'clone'],
     'draft':         ['edit', 'delete']
@@ -3733,7 +3830,9 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
 
   // ── View switching ──
   // ── DART stepper (wizard) ──
-  const WIZ_STEP_DEFS = { config:'Configuration', input:'Input', output:'Output', onboarding:'Onboarding', format:'Format', validate:'Validate', confirm:'Confirmation', sharing:'Sharing', review:'Review & Save' };
+  const WIZ_STEP_DEFS = { config:'Configuration', input:'Input', output:'Output', onboarding:'Onboarding', format:'Format', validate:'Run Test', confirm:'Confirmation', sharing:'Sharing', review:'Review & Save' };
+  // Only the test run is optional (Format is required — we want users to review formatting).
+  const OPTIONAL_STEPS = { validate: 1 };
   let _wizActive = 'input';
   let _stepErrors = {};
   let _lastMode = 'both';     // mode the wizard was last rendered with (detects a real change on Edit)
@@ -3767,8 +3866,15 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
         ? '<span class="dart-step-ind complete"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-6.5"/></svg></span>'
         : '<span class="dart-step-ind ' + status + '">' + (i + 1) + '</span>';
       const badge = (_stepErrors[key] > 0) ? '<span class="dart-step-badge">● ' + _stepErrors[key] + '</span>' : '';
-      const step = '<div class="dart-step ' + status + '" onclick="goWizStep(\'' + key + '\')">' + ind +
-                   '<span class="dart-step-title">' + WIZ_STEP_DEFS[key] + '</span>' + badge + '</div>';
+      // Stepper follows Back/Next gating: past/current steps navigate freely; the immediate next step
+      // runs the same validation as Next (goNext); steps further ahead are not yet reachable.
+      let click = '', cls = '';
+      if (i <= ai) click = 'onclick="goWizStep(\'' + key + '\')"';
+      else if (i === ai + 1) click = 'onclick="goNext()"';
+      else cls = ' step-locked';
+      const opt = OPTIONAL_STEPS[key] ? '<span class="dart-step-optional">Optional</span>' : '';
+      const step = '<div class="dart-step ' + status + cls + '" ' + click + '>' + ind +
+                   '<span class="dart-step-label"><span class="dart-step-title">' + WIZ_STEP_DEFS[key] + '</span>' + opt + '</span>' + badge + '</div>';
       const sep = i < order.length - 1 ? '<div class="dart-step-sep' + (i < ai ? ' complete' : '') + '"></div>' : '';
       return step + sep;
     }).join('');
@@ -3799,7 +3905,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     if (_wizardMode === 'view') { enterDetailView(false); return; }
     // Fresh creation → the stepper wizard.
     _wizardSaved = false; // exits should warn until the config is created
-    _isClone = false; _cloneSnapshot = null;
+    _isClone = false; _clonePersisted = false; _cloneSnapshot = null;
     const c = document.getElementById('step-config'); if (c) c.classList.remove('active');
     const e = document.getElementById('step-editor'); if (e) e.classList.add('active');
     hideCreateSuccess();
@@ -3841,19 +3947,32 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   // Header CTAs by access level. owner = full; editor (shared, can edit) = Edit + Clone;
   // viewer (no rights) = Clone only. Anyone can Clone (it makes their own copy). Creation wizard
   // shows only "Edit setup".
+  var ICON_PENCIL = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-9 9H2v-3L11 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // DART DS icon: System/Settings (Figma node 412:22453)
+  var ICON_DS_SETTINGS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.9999 7.99996C13.0608 7.99998 14.0779 8.42171 14.8281 9.17184C15.5782 9.92198 15.9999 10.9391 15.9999 12C15.9999 13.0608 15.5782 14.078 14.8281 14.8281C14.0779 15.5782 13.0608 15.9999 11.9999 16C10.9391 16 9.92195 15.5782 9.17181 14.8281C8.42167 14.0779 7.99995 13.0608 7.99994 12C7.99994 10.9391 8.42166 9.92198 9.17181 9.17184C9.92195 8.4217 10.9391 7.99996 11.9999 7.99996ZM11.9999 9.99996C11.4695 9.99996 10.9609 10.2108 10.5859 10.5859C10.2108 10.961 9.99994 11.4695 9.99994 12C9.99995 12.5304 10.2108 13.039 10.5859 13.414C10.9609 13.7891 11.4695 14 11.9999 14C12.5303 13.9999 13.0389 13.7891 13.414 13.414C13.7891 13.039 13.9999 12.5304 13.9999 12C13.9999 11.4696 13.789 10.961 13.414 10.5859C13.0389 10.2108 12.5303 9.99998 11.9999 9.99996Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.42572 3.82906C10.27 1.30902 13.9941 1.39304 14.6464 4.08102C14.6733 4.19178 14.7266 4.29521 14.8007 4.3818C14.8748 4.46826 14.968 4.53645 15.0732 4.58004C15.1784 4.62362 15.2926 4.64154 15.4062 4.63277C15.5198 4.62395 15.6302 4.58859 15.7275 4.52926L15.957 4.40231C18.336 3.2176 20.9102 5.9104 19.4716 8.2734C19.4125 8.37055 19.3769 8.48033 19.3681 8.59371C19.3593 8.70727 19.3782 8.82148 19.4218 8.92672C19.4653 9.03177 19.5328 9.12515 19.6191 9.19918C19.7055 9.2732 19.8083 9.32654 19.9189 9.35348L20.1708 9.42574C22.6908 10.27 22.6068 13.9941 19.9189 14.6464C19.8081 14.6733 19.7047 14.7266 19.6181 14.8007C19.5316 14.8748 19.4635 14.968 19.4199 15.0732C19.3763 15.1784 19.3584 15.2926 19.3671 15.4062C19.3737 15.4915 19.3951 15.575 19.4306 15.6523L19.4706 15.7275C20.9559 18.1657 18.1656 20.9565 15.7265 19.4716C15.6294 19.4125 15.5195 19.3769 15.4062 19.3681C15.2926 19.3593 15.1784 19.3783 15.0732 19.4218C14.9681 19.4654 14.8748 19.5328 14.8007 19.6191C14.7452 19.684 14.7014 19.7582 14.6718 19.8379L14.6464 19.9189C13.973 22.6935 10.0268 22.6935 9.35345 19.9189C9.32661 19.8081 9.27325 19.7047 9.19915 19.6181C9.1251 19.5317 9.03187 19.4635 8.92669 19.4199C8.82147 19.3763 8.70724 19.3584 8.59369 19.3671C8.50844 19.3738 8.42491 19.3952 8.34759 19.4306L8.2724 19.4707C5.83417 20.956 3.04328 18.1657 4.52826 15.7265L4.56829 15.6513C4.60355 15.5742 4.62517 15.4912 4.63177 15.4062C4.64056 15.2927 4.62162 15.1784 4.57806 15.0732C4.53454 14.9682 4.46709 14.8748 4.38079 14.8007C4.31596 14.7452 4.24164 14.7015 4.16204 14.6718L4.08099 14.6464C1.30634 13.9731 1.30634 10.0268 4.08099 9.35348C4.19175 9.32663 4.29518 9.27329 4.38177 9.19918C4.46825 9.12511 4.53642 9.03191 4.58001 8.92672C4.62361 8.8215 4.64151 8.70727 4.63275 8.59371C4.62614 8.50847 4.60471 8.42493 4.56927 8.34762L4.52923 8.27242C3.04413 5.83465 5.83258 3.04417 8.27142 4.52731C8.69334 4.78377 9.23725 4.55804 9.35345 4.08102L9.42572 3.82906ZM12.7031 4.5527C12.5242 3.81573 11.4756 3.81573 11.2968 4.5527C10.8743 6.28909 8.93784 7.14173 7.38275 6.32125L7.23333 6.23629C6.58452 5.84128 5.84272 6.58365 6.23724 7.23141C6.46041 7.59745 6.59368 8.01102 6.62689 8.43844C6.66003 8.86602 6.59182 9.29614 6.42767 9.69234C6.26358 10.0883 6.00815 10.4399 5.68255 10.7187C5.39735 10.9628 5.06487 11.1455 4.70697 11.2548L4.55267 11.2968C3.81571 11.4757 3.81571 12.5243 4.55267 12.7031C4.96883 12.8044 5.35627 13.0026 5.68158 13.2812C6.00695 13.56 6.26274 13.9117 6.42669 14.3076C6.59064 14.7035 6.65899 15.1332 6.62591 15.5605C6.59282 15.9878 6.45919 16.4016 6.23626 16.7675C5.84171 17.4163 6.58373 18.1571 7.23138 17.7627C7.59737 17.5396 8.01107 17.4062 8.43841 17.373C8.86598 17.3399 9.29612 17.4081 9.69232 17.5722C10.0883 17.7363 10.4399 17.9918 10.7187 18.3173C10.9975 18.6431 11.1958 19.0305 11.2968 19.4472L11.3398 19.5771C11.6031 20.1814 12.5354 20.138 12.7031 19.4472C12.8043 19.031 13.0026 18.6436 13.2812 18.3183C13.56 17.9929 13.9117 17.7372 14.3076 17.5732C14.7035 17.4093 15.1332 17.3409 15.5605 17.374C15.9877 17.4071 16.4015 17.5407 16.7675 17.7636C17.4162 18.1581 18.157 17.4161 17.7626 16.7685C17.5398 16.4027 17.4062 15.9885 17.373 15.5615C17.3398 15.1339 17.4081 14.7038 17.5722 14.3076C17.7363 13.9116 17.9917 13.56 18.3173 13.2812C18.6431 13.0024 19.0305 12.8041 19.4472 12.7031L19.5771 12.6601C20.1814 12.3968 20.138 11.4645 19.4472 11.2968C19.031 11.1956 18.6436 10.9973 18.3183 10.7187C17.9929 10.4399 17.7371 10.0882 17.5732 9.69234C17.4092 9.29638 17.3409 8.86671 17.374 8.43941C17.407 8.01215 17.5407 7.59838 17.7636 7.23238C18.1581 6.58366 17.4161 5.84286 16.7685 6.23727L16.7675 6.23629C16.4016 6.45928 15.9887 6.59371 15.5615 6.62691C15.1339 6.66007 14.7038 6.59183 14.3076 6.4277C13.9116 6.26361 13.5599 6.00816 13.2812 5.68258C13.0371 5.39738 12.8544 5.0649 12.7451 4.70699L12.7031 4.5527Z" fill="currentColor"/></svg>';
   function applyRightsCTAs(detail, editing) {
     var r = _configRights, canEdit = (r === 'owner' || r === 'editor');
     function show(id, on) { var b = document.getElementById(id); if (b) b.style.display = on ? '' : 'none'; }
     var hideAll = function () {
       ['btn-edit', 'btn-editsetup', 'btn-clone', 'wh-sep-1', 'btn-runtest', 'btn-download', 'btn-share', 'wh-sep-2',
-       'btn-revert', 'btn-delete', 'btn-cancel-edit', 'btn-save'].forEach(function (id) { show(id, false); });
+       'btn-revert', 'btn-restore', 'btn-delete', 'btn-cancel-edit', 'btn-save'].forEach(function (id) { show(id, false); });
     };
-    if (!detail) { // creation wizard → only Edit setup (Run test is the Validate STEP, not a header button)
-      hideAll(); show('btn-editsetup', true); return;
+    // Draft / creation (WIP) → pencil + "Edit setup" (the config is still being built; name editable).
+    // Created config → DART System/Settings gear + "Settings" (adjusting site/mode of something in place).
+    function setEditSetupBtn(settings) {
+      var ic = document.getElementById('editsetup-icon'); var lb = document.getElementById('editsetup-label');
+      if (ic) ic.innerHTML = settings ? ICON_DS_SETTINGS : ICON_PENCIL;
+      if (lb) lb.textContent = settings ? 'Settings' : 'Edit setup';
     }
-    if (editing) { // detail edit: Edit setup · Clone | Run test · Share | Revert · Delete  (Cancel/Save in topbar)
+    if (!detail) { // creation / draft wizard → only the setup editor (name still editable here)
+      hideAll(); setEditSetupBtn(false); show('btn-editsetup', true); return;
+    }
+    if (editing) { // detail edit: Settings · Clone | Run test · Share | Revert · Delete  (Cancel/Save in topbar)
       var emode = (document.querySelector('#mode-group input:checked') || {}).value || 'both';
       hideAll();
+      // Unsaved clone = WIP new config (pencil/"Edit setup", name editable). A saved config — or a
+      // clone that's already been saved — is gear/"Settings" (name fixed).
+      setEditSetupBtn(_isClone && !_clonePersisted ? false : true);
       show('btn-editsetup', true);
       show('btn-clone', true);
       var runnable = emode !== 'onboarding';  // no tokenization output to test in Data-Onboarding-only
@@ -3868,10 +3987,15 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
       show('btn-save', true);                 // in the topbar
       return;
     }
-    // read-only view — Edit + Clone, plus Download for DeID-capable configs.
+    // read-only view. A PREVIOUS version is never editable — instead an owned one offers "Restore
+    // this version". Latest owned/editor → Edit. Everyone → Clone, plus Download for DeID-capable.
     var roMode = (document.querySelector('#mode-group input:checked') || {}).value || 'both';
+    var cat = _openCfg && _openCfg.cat;
+    var isPrevVersion = (cat === 'owned-version' || cat === 'shared-version');
+    var isOwnedVersion = (cat === 'owned-version');
     hideAll();
-    show('btn-edit', canEdit);
+    show('btn-edit', canEdit && !isPrevVersion);   // no Edit on a previous version
+    show('btn-restore', isOwnedVersion);           // Restore this version (owned previous versions only)
     show('btn-clone', true);
     show('btn-download', roMode !== 'onboarding');
   }
@@ -3896,9 +4020,15 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   }
   function enterDetailView(justCreated) {
     _editing = false; _dirty = false; _editSnapshot = null; // always open read-only
-    _isClone = false; _cloneSnapshot = null;
+    _isClone = false; _clonePersisted = false; _cloneSnapshot = null;
     const c = document.getElementById('step-config'); if (c) c.classList.remove('active');
     const e = document.getElementById('step-editor'); if (e) e.classList.add('active');
+    // Restore this version's saved panel state (captured on a prior save) so each version shows its
+    // own content. Configs never edited have no snapshot → keep the current/seeded panels.
+    if (_openRow && _openRow.dataset && _openRow.dataset.vkey && _versionState[_openRow.dataset.vkey]) {
+      var _pnl = document.querySelector('#step-editor .tab-panels');
+      if (_pnl) _pnl.innerHTML = _versionState[_openRow.dataset.vkey].panels;
+    }
     updateOverview();
     // Pull the opened config's real identity (title/site) over the seeded defaults.
     if (_openCfg) {
@@ -4036,14 +4166,105 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
       onConfirm: function () { _wizardSaved = true; showToast('“' + name + '” deleted.'); showView('landing'); }
     });
   }
-  function cloneConfig() {
-    var nm = (document.getElementById('ov-name') || {}).textContent || 'configuration';
-    _isClone = true; _configRights = 'owner';
-    var n = document.getElementById('ov-name'); if (n) n.textContent = 'Copy of ' + nm;
-    setVersionTag(true, '1');
-    enterEditMode();                 // unlock fields + edit chrome (snapshots into _editSnapshot)
-    _cloneSnapshot = _editSnapshot;  // remember the base clone state for "Revert to original"
-    showToast('Editing a clone — “Copy of ' + nm + '”.');
+  // Restore the previous version currently open in the detail view → becomes the new latest.
+  function restoreOpenedVersion() {
+    var name = (_openCfg && _openCfg.name) || 'this configuration';
+    askConfirm({
+      title: 'Restore this version?',
+      msg: 'This makes the version you’re viewing the current version of “' + name + '”. A new version is created — nothing is overwritten.',
+      okLabel: 'Restore', okVariant: 'primary', cancelLabel: 'Cancel',
+      onConfirm: function () { showView('landing'); showToast('Version restored as the current version of “' + name + '”.'); }
+    });
+  }
+  // Versioning: editing the latest version and saving creates a NEW version. The pre-save state is
+  // preserved as a previous version (a restorable row appears under the config in the list).
+  function addPreviousVersionRowOnSave() {
+    var row = _openRow;
+    if (!row || !row.classList || !row.classList.contains('parent-row')) return; // only when editing a real latest row
+    if (rowCategory(row) !== 'owned-latest') return;                              // not for shared / drafts / versions
+    var pill = row.querySelector('.version-pill');
+    var oldNum = pill ? (parseInt(pill.textContent, 10) || 0) : 0;
+    // Find / create this config's version group id.
+    var btn = row.querySelector('.expand-btn');
+    var gid;
+    if (btn) {
+      var m = /toggleVersions\('([^']+)'/.exec(btn.getAttribute('onclick') || '');
+      gid = m ? m[1] : ('v-auto-' + (++_vGroupSeq));
+    } else {
+      gid = 'v-auto-' + (++_vGroupSeq);
+      // Convert the static expand-slot into a working expander.
+      var slot = row.querySelector('.expand-slot');
+      var exp = '<button class="expand-btn open" onclick="event.stopPropagation(); toggleVersions(\'' + gid + '\', this)" data-tooltip="Hide Previous Versions"><svg width="8" height="12" viewBox="0 0 8 12" fill="none"><path d="M2 2l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+      if (slot) slot.outerHTML = exp; else { var cell = row.querySelector('.config-name-cell'); if (cell) cell.insertAdjacentHTML('afterbegin', exp); }
+    }
+    // Build the previous-version row = a snapshot of the old latest (name shown as "—").
+    var snap = document.createElement('tr');
+    snap.className = 'version-child row-private';   // owned previous version
+    snap.setAttribute('data-group', gid);
+    snap.setAttribute('onclick', 'openConfig(this)');
+    var cells = row.querySelectorAll('td');
+    var site = cells[5] ? cells[5].textContent.trim() : 'datavant';
+    var inp = cells[2] ? cells[2].innerHTML : '';
+    var out1 = cells[3] ? cells[3].innerHTML : '';
+    var out2 = cells[4] ? cells[4].innerHTML : '';
+    snap.innerHTML =
+      '<td><div class="config-name-cell" style="padding-left:23px"><span class="config-name-text">—</span></div></td>' +
+      '<td><span class="version-pill">' + oldNum + '</span></td>' +
+      '<td class="td-right">' + (cells[2] ? inp : '') + '</td>' +
+      '<td class="td-right">' + out1 + '</td>' +
+      '<td class="td-right">' + out2 + '</td>' +
+      '<td>' + site + '</td>' +
+      '<td><div class="last-edit-cell"><div class="date">' + nowStamp() + '</div><div class="email">sergi.navarro@datavant.com</div></div></td>' +
+      '<td class="td-actions" onclick="event.stopPropagation()"><button class="kebab-btn">⋮</button></td>';
+    // Capture the editable state per version so each one shows its own content:
+    //   • previous version row → the PRE-edit panels (what it looked like before this save)
+    //   • parent (new latest)  → the CURRENT (post-edit) panels
+    var pnl = document.querySelector('#step-editor .tab-panels');
+    var curHTML = pnl ? pnl.innerHTML : null;   // post-edit
+    var prevHTML = _editSnapshot;               // pre-edit (captured on enterEditMode)
+    if (prevHTML) { var pk = 'vk' + (++_vkSeq); _versionState[pk] = { panels: prevHTML }; snap.dataset.vkey = pk; }
+    if (curHTML)  { var lk = row.dataset.vkey || ('vk' + (++_vkSeq)); _versionState[lk] = { panels: curHTML }; row.dataset.vkey = lk; }
+    // Insert just below the parent (above any existing children of this group).
+    row.parentNode.insertBefore(snap, row.nextSibling);
+    // Bump the parent's (latest) version number.
+    if (pill) pill.textContent = String(oldNum + 1);
+    // Force the group OPEN so every version of this config is visible when you return to the list
+    // (overrides any collapsed / filter-driven inline display:none).
+    var expBtn = row.querySelector('.expand-btn');
+    if (expBtn) { expBtn.classList.add('open'); expBtn.dataset.tooltip = 'Hide Previous Versions'; }
+    document.querySelectorAll('[data-group="' + gid + '"]').forEach(function (r) { r.classList.add('visible'); r.style.display = ''; });
+    if (typeof initRowActions === 'function') initRowActions(); // wire the new kebab
+  }
+  function nowStamp() {
+    try {
+      var d = new Date();
+      var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+      var hh = ('0' + d.getHours()).slice(-2), mm = ('0' + d.getMinutes()).slice(-2);
+      return mo + ' ' + d.getDate() + ', ' + d.getFullYear() + ' ' + hh + ':' + mm;
+    } catch (e) { return ''; }
+  }
+  // Clone now goes through the setup modal first ("Clone Settings"), so the user names the copy
+  // (prefilled "Copy of …") and can set site/mode before entering the editable clone.
+  function cloneConfig() { openSetup('clone'); }
+  // Clone = a PREFILLED "create new configuration" run. The source config's grids are already in
+  // the panels (it was open in the detail view), so we carry the chosen name/site/mode into the
+  // source-of-truth fields and drop the user into the stepper wizard at the first step (Input) to
+  // review / change / validate. It only goes live once they reach the end and Create — at which
+  // point it's a normal saved config (name immutable, etc.).
+  function applyCloneSetup() {
+    var name = document.getElementById('setup-name').value.trim();
+    var site = document.getElementById('setup-site').value;
+    var modeEl = document.querySelector('#setup-mode input:checked'); var mode = modeEl ? modeEl.value : 'both';
+    closeSetup();
+    var wName = document.getElementById('wiz-name'); if (wName) wName.value = name;
+    var wSite = document.getElementById('wiz-site'); if (wSite) wSite.value = site;
+    var wMode = document.querySelector('#mode-group input[value="' + mode + '"]'); if (wMode) wMode.checked = true;
+    _configRights = 'owner';
+    _wizardMode = 'create';          // prefilled create flow — stepper chrome, name/site/mode editable, exit warns
+    _initialMode = mode; _lastMode = mode; _noteDismissed = false;
+    if (typeof handleModeChange === 'function') handleModeChange(mode);
+    enterWizard();                   // stepper; preserves the prefilled grids; lands on the first step (Input)
+    showToast('Cloned into a new configuration — review each step, validate, then Create to go live.');
   }
   // ── Revert a clone to its base state (Image 6) ──
   function openRevertModal() { document.getElementById('revert-modal').classList.add('open'); }
@@ -4093,6 +4314,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     closeRunTest();
     if (wizOrder().indexOf('validate') >= 0) goWizStep('validate');
     var out = document.getElementById('validate-output'); if (out) out.style.display = '';
+    updateStepNav(); // test was run → footer CTA flips from "Skip" to "Next"
   }
   // ── Isolated Test Runner page (detail edit) ──
   var _testRun = false;
@@ -4144,6 +4366,9 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     document.getElementById('view-wizard').classList.add('active'); // back to the detail tabs
     // Keep _isClone / _cloneSnapshot intact — a clone stays a clone across saves, so "Revert to
     // original" remains available on later edits (it reverts to the original base, not the last save).
+    // But mark it persisted: once saved, the clone is a real config and its name is now immutable.
+    _clonePersisted = true;
+    addPreviousVersionRowOnSave();   // edit + save → snapshots state; prior state becomes a restorable Previous Version (must run BEFORE _editSnapshot is cleared)
     _editing = false; _dirty = false; _editSnapshot = null;
     bumpVersion();
     applyWizardChrome();
@@ -4200,6 +4425,9 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     document.getElementById('view-wizard').classList.add('active'); // return to detail tabs (also from the runner)
     // Keep _isClone / _cloneSnapshot intact — a clone stays a clone across saves, so "Revert to
     // original" remains available on later edits (it reverts to the original base, not the last save).
+    // But mark it persisted: once saved, the clone is a real config and its name is now immutable.
+    _clonePersisted = true;
+    addPreviousVersionRowOnSave();   // edit + save → snapshots state; prior state becomes a restorable Previous Version (must run BEFORE _editSnapshot is cleared)
     _editing = false; _dirty = false; _editSnapshot = null;
     bumpVersion();
     applyWizardChrome();
@@ -4218,7 +4446,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
         var panels = document.querySelector('#step-editor .tab-panels');
         if (panels && _editSnapshot != null) panels.innerHTML = _editSnapshot; // revert edits
         _editing = false; _dirty = false; _editSnapshot = null;
-        _isClone = false; _cloneSnapshot = null;
+        _isClone = false; _clonePersisted = false; _cloneSnapshot = null;
         applyWizardChrome();
         if (typeof applyOnboardingEditable === 'function') applyOnboardingEditable();
         var mode = (document.querySelector('#mode-group input:checked') || {}).value || 'both';
@@ -4442,13 +4670,38 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     closeDropdown();
     const titleEl = document.getElementById('setup-title');
     const startBtn = document.getElementById('setup-start');
+    // The configuration name is immutable once the config is created (non-draft). That's the case
+    // when we opened an existing config (_wizardMode === 'view'); the creation wizard keeps it editable.
+    // Name is immutable only for an existing, saved config. A clone is a brand-new config (needs its
+    // own unique name), so — like 'new'/'clone' in the real code — its name stays editable.
+    var isClone = edit === 'clone';
+    // A clone's name stays editable only until it's first saved (then it's a real config → locked).
+    var unsavedClone = _isClone && !_clonePersisted;
+    var nameLocked = !!edit && _wizardMode === 'view' && !isClone && !unsavedClone;
+    _setupLocked = nameLocked;
+    var nameEl = document.getElementById('setup-name');
+    var nameHint = document.getElementById('setup-name-hint');
+    var introEl = document.getElementById('setup-intro-main');
+    var reqStar = document.querySelector('.setup-req');
+    if (nameEl) { nameEl.readOnly = nameLocked; nameEl.classList.toggle('locked', nameLocked); }
+    if (reqStar) reqStar.style.display = nameLocked ? 'none' : '';
+    if (nameHint) nameHint.textContent = nameLocked
+      ? 'The configuration name can’t be changed after it’s created.'
+      : 'Used to select this configuration when running Datavant software.';
+    if (introEl) introEl.textContent = nameLocked
+      ? 'Update this configuration’s site or mode. The name is fixed once a configuration is created.'
+      : 'Name your configuration, choose its site, and pick a mode to get started. You can refine everything in the next step.';
     if (edit) {
-      document.getElementById('setup-name').value = (document.getElementById('wiz-name') || {}).value || '';
+      var curName = (document.getElementById('wiz-name') || {}).value || '';
+      // Clone starts with an EMPTY (required) name so the user must deliberately name the copy —
+      // avoids cloning past a prefilled name and then being unable to rename it once saved.
+      document.getElementById('setup-name').value = isClone ? '' : curName;
       document.getElementById('setup-site').value = (document.getElementById('wiz-site') || {}).value || '';
       const m = (document.querySelector('#mode-group input:checked') || {}).value || 'both';
       const r = document.querySelector('#setup-mode input[value="' + m + '"]'); if (r) r.checked = true;
-      if (titleEl) titleEl.textContent = 'Edit Configuration';
-      if (startBtn) startBtn.textContent = 'Save changes';
+      if (titleEl) titleEl.textContent = isClone ? 'Clone Settings' : (nameLocked ? 'Configuration settings' : 'Edit Configuration');
+      if (startBtn) startBtn.textContent = isClone ? 'Clone' : 'Save changes';
+      if (isClone && introEl) introEl.textContent = 'Name your clone, then choose its site and mode. It starts as a copy of the original — give it a unique name.';
     } else {
       document.getElementById('setup-name').value = '';
       document.getElementById('setup-site').value = '';
@@ -4458,8 +4711,9 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     }
     markRequired(document.getElementById('setup-name'), false);
     markRequired(document.getElementById('setup-site'), false);
-    _setupEditing = !!edit;
-    _setupModeBefore = edit ? ((document.querySelector('#mode-group input:checked') || {}).value || 'both') : null;
+    _setupEditing = !!edit && !isClone;             // clone is a NEW config, not an in-place edit
+    _setupCloneMode = isClone;
+    _setupModeBefore = (edit && !isClone) ? ((document.querySelector('#mode-group input:checked') || {}).value || 'both') : null;
     showSetupStep(1);
     document.getElementById('setup-modal').classList.add('open');
     setTimeout(() => { const n = document.getElementById('setup-name'); if (n) n.focus(); }, 50);
@@ -4468,6 +4722,8 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   // an existing config whose mode actually changed.
   var _setupEditing = false;
   var _setupModeBefore = null;
+  var _setupLocked = false;
+  var _setupCloneMode = false;
   function showSetupStep(step) {
     var s1 = document.getElementById('setup-step1');
     var s2 = document.getElementById('setup-step2');
@@ -4485,10 +4741,10 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     } else {
       if (s1) s1.style.display = '';
       if (s2) s2.style.display = 'none';
-      if (title) title.textContent = _setupEditing ? 'Edit Configuration' : 'New Configuration';
+      if (title) title.textContent = _setupCloneMode ? 'Clone Settings' : (_setupLocked ? 'Configuration settings' : (_setupEditing ? 'Edit Configuration' : 'New Configuration'));
       if (back) back.style.display = 'none';
       if (cancel) cancel.style.display = '';
-      if (start) { start.textContent = _setupEditing ? 'Save changes' : 'Start Configuration'; start.className = 'btn btn-primary'; }
+      if (start) { start.textContent = _setupCloneMode ? 'Clone' : (_setupEditing ? 'Save changes' : 'Start Configuration'); start.className = 'btn btn-primary'; }
     }
   }
   function setupBack() { showSetupStep(1); }
@@ -4510,8 +4766,16 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   }
   // ── Reusable confirm dialog ──
   var _confirmCb = null;
+  // Notification icons for confirm/alert dialogs (warning = orange triangle, error = red circle ✕/!).
+  var MODAL_ICON_ERROR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fdecea" stroke="#de1212" stroke-width="1.6"/><path d="M12 7.4v5.4" stroke="#de1212" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.4" r="1.15" fill="#de1212"/></svg>';
+  var MODAL_ICON_WARN = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3.4l9 15.6a1 1 0 0 1-.87 1.5H3.87A1 1 0 0 1 3 19L12 3.4z" fill="#fff4e5" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 9.2v4.3" stroke="#d97706" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.1" fill="#d97706"/></svg>';
   function askConfirm(opts) {
     opts = opts || {};
+    // Type drives the header icon. Explicit opts.type wins; otherwise block dialogs (hideOk, used for
+    // unresolved-error gates) are errors and everything else is a warning.
+    var type = opts.type || (opts.hideOk ? 'error' : 'warning');
+    var ic = document.getElementById('confirm-type-icon');
+    if (ic) { ic.innerHTML = (type === 'error') ? MODAL_ICON_ERROR : MODAL_ICON_WARN; ic.style.display = 'inline-flex'; }
     var t = document.getElementById('confirm-title'); if (t) t.textContent = opts.title || 'Are you sure?';
     var m = document.getElementById('confirm-msg'); if (m) m.textContent = opts.msg || '';
     var ok = document.getElementById('confirm-ok');
@@ -4541,15 +4805,25 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   var _wizardMode = 'view'; // 'create' = new config (warn on leave) | 'view' = opened existing (silent)
   var _configRights = 'owner'; // 'owner' | 'editor' | 'viewer' — drives detail-view CTAs
   var _openCfg = null;         // identity pulled from the clicked list row
+  var _openRow = null;         // the list <tr> the detail view was opened from (for version-on-save)
+  var _vGroupSeq = 1000;       // unique id source for new version groups created on save
+  var _versionState = {};      // vkey -> { panels: html } — captured config state per version
+  var _vkSeq = 0;              // unique id source for version snapshots
   var _editing = false;        // detail view: actively editing (fields unlocked) vs read-only
   var _dirty = false;          // unsaved edits in the current edit session
   var _editSnapshot = null;    // tab-panels HTML captured on Edit, restored on Cancel
   var _isClone = false;        // current config is a clone being edited (enables "Revert to original")
+  var _clonePersisted = false; // a clone becomes a real config after its first Save → name then locks
   var _cloneSnapshot = null;   // base clone state, restored by Revert to original
   // Open a config from the list in the editable tab/detail view, carrying its title, site, version,
   // access level, and sharing state across.
   function openConfig(rowEl) {
-    _wizardMode = 'view';
+    // A draft is an unfinished creation — the process was never completed — so reopening it resumes
+    // the stepper wizard (create flow) rather than the read-only/edit tab detail view used for
+    // finished configs.
+    var isDraft = !!(rowEl && rowEl.classList && rowEl.classList.contains('row-draft'));
+    _wizardMode = isDraft ? 'create' : 'view';
+    _openRow = rowEl || null;
     if (rowEl) {
       var nameEl = rowEl.querySelector('.config-name-text');
       var cells = rowEl.querySelectorAll('td');
@@ -4559,9 +4833,18 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
         name: nameEl ? nameEl.textContent.trim() : 'Configuration',
         site: cells[5] ? cells[5].textContent.trim() : '—',
         version: verEl ? verEl.textContent.trim() : '1',
+        cat: rowCategory(rowEl),                 // owned-latest | owned-version | shared-* | draft
         shared: rowEl.classList.contains('row-shared'),
         sharedBy: (rowEl.querySelector('.shared-by-line') || {}).textContent || ''
       };
+      // A previous-version row shows "—" as its name in the list; when opened, use the parent
+      // config's real name so the detail header reads correctly.
+      if (rowEl.classList.contains('version-child')) {
+        var pp = rowEl.previousElementSibling;
+        while (pp && pp.classList.contains('version-child')) pp = pp.previousElementSibling;
+        var ppn = pp && pp.querySelector('.config-name-text');
+        if (ppn) _openCfg.name = ppn.textContent.trim();
+      }
       // Reflect the row's sharing state in the Sharing tab.
       _shareRecipients = _openCfg.shared
         ? [{ who: (_openCfg.sharedBy || 'Your organization').replace(/^Shared by\s*/i, ''), access: 'Can use', status: 'Active' }]
@@ -4613,6 +4896,8 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     markRequired(nameEl, !name);
     markRequired(siteEl, !site);
     if (!name || !site) { (!name ? nameEl : siteEl).focus(); return; }
+    // Clone → spin up a new editable clone (no mode-change warning; it's a new config).
+    if (_setupCloneMode) { applyCloneSetup(); return; }
     const mode = (document.querySelector('#setup-mode input:checked') || {}).value || 'both';
     // Editing an existing config and the mode actually changed → surface the warning step first.
     if (_setupEditing && _setupModeBefore && mode !== _setupModeBefore) {
@@ -4853,7 +5138,14 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     const i = order.indexOf(_wizActive);
     const btn = document.getElementById('step-next-btn');
     if (btn) {
-      btn.textContent = (i >= order.length - 1) ? 'Create Configuration' : 'Next';
+      const isLast = i >= order.length - 1;
+      let label = isLast ? 'Create Configuration' : 'Next';
+      // Run Test is optional: the CTA reads "Skip" until the user actually runs a test, then "Next".
+      if (!isLast && _wizActive === 'validate') {
+        var vo = document.getElementById('validate-output');
+        label = (vo && vo.style.display !== 'none') ? 'Next' : 'Skip';
+      }
+      btn.textContent = label;
       // On the Confirmation step the CTA stays disabled until the override checkbox is ticked.
       var ovr = document.getElementById('confirm-override');
       btn.disabled = (_wizActive === 'confirm') ? !(ovr && ovr.checked) : false;
@@ -4869,6 +5161,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   }
   function goNext() {
     if (_wizActive === 'input') validateInput();
+    if (_wizActive === 'output') validateOutput();
     if (_wizActive === 'onboarding') validateOnboarding();
     // Confirmation step: rationale is required before creating (checkbox already gates the button).
     if (_wizActive === 'confirm') {
@@ -4912,10 +5205,20 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
       });
       return;
     }
+    // Input → Output (tokenizing modes): offer to auto-add the generatable Core tokens before
+    // landing on Output. Add or Skip both proceed.
+    if (_wizActive === 'input') {
+      var ord0 = wizOrder();
+      if (ord0[ord0.indexOf('input') + 1] === 'output' && coreSuggestPending().length > 0) {
+        openCoreTokenSuggest(proceed);
+        return;
+      }
+    }
     proceed();
   }
   function stepErrorMessage(step, n) {
     if (step === 'input') return 'Some columns share a data type that must be unique. Fix the highlighted rows before continuing.';
+    if (step === 'output') return (n === 1 ? 'A token is' : n + ' tokens are') + ' missing a required input column. Restore the missing input(s) on the Input step, or remove the highlighted token(s) before continuing.';
     return 'This step has ' + n + (n === 1 ? ' error' : ' errors') + ' that must be resolved before continuing.';
   }
   function stepWarningMessage(step, n) {
@@ -5105,6 +5408,44 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     buildOutputGrid(derived.concat(extras));
   }
 
+  // Flag Core token rows whose required input column has been removed from Input. Blocks Next from
+  // Output (via _stepErrors.output) until the input is restored or the token row is deleted.
+  // CORE tokens only — Standard/Custom rows aren't auto-validated against PII here.
+  function validateOutput() {
+    var tb = document.getElementById('output-tbody');
+    if (!tb) { _stepErrors.output = 0; return; }
+    var avail = getAvailablePII();
+    tb.querySelectorAll('.field-error.tok-err').forEach(function (e) { e.remove(); });
+    tb.querySelectorAll('.chip.chip-missing').forEach(function (c) { c.classList.remove('chip-missing'); });
+    var errs = 0;
+    Array.from(tb.querySelectorAll('tr')).forEach(function (tr) {
+      if (!tr.querySelector('.op-static')) return;            // token rows only
+      var name = tr.cells[2] ? tr.cells[2].textContent.trim() : '';
+      var m = /^token_(\d+)$/.exec(name); if (!m) return;
+      var t = findToken(m[1]); if (!t) return;
+      if ((TOKEN_CATALOG.core || []).indexOf(t) < 0) return;  // CORE only
+      var missKeys = tokenReqKeys(t.fields).filter(function (k) { return !avail[k]; });
+      if (!missKeys.length) return;
+      var cell = tr.cells[3];                                  // the Input Column Source (chips) cell
+      if (cell) {
+        // Flag ONLY the chip whose underlying input is missing (field-level, not the whole row).
+        Array.from(cell.querySelectorAll('.chip')).forEach(function (chip) {
+          var ck = tokenReqKeys([chip.textContent])[0];
+          if (ck && missKeys.indexOf(ck) >= 0) chip.classList.add('chip-missing');
+        });
+        if (!cell.querySelector('.tok-err')) {
+          var d = document.createElement('div'); d.className = 'field-error tok-err';
+          d.textContent = 'Missing in input';
+          cell.appendChild(d);
+        }
+      }
+      errs++;
+    });
+    _stepErrors.output = errs;
+    renderStepper();
+    if (typeof updateHeaderSummary === 'function') updateHeaderSummary();
+  }
+
   // ── Output grid rows ──
   function outputColRowHTML(c) {
     return '<tr ondragover="rowDragOver(event,this)" ondrop="rowDrop(event,this)">' +
@@ -5148,6 +5489,8 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   function renumberOutput() {
     var tb = document.getElementById('output-tbody'); if (!tb) return;
     var i = 0; tb.querySelectorAll('tr').forEach(function (tr) { var n = tr.querySelector('.row-num'); if (n) { i++; n.textContent = i; } });
+    // Re-check token-vs-input integrity whenever the grid changes while on the Output step.
+    if (_wizActive === 'output' && typeof validateOutput === 'function') validateOutput();
   }
   function onOutputCheck() {
     var tb = document.getElementById('output-tbody'); if (!tb) return;
@@ -5186,13 +5529,12 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   }
 
   // ── Seed the output grid ──
-  // Columns are DERIVED from Input (deriveOutput); we seed only the persistent extras that aren't
-  // tied to an input column: the encryption key + the Core tokens the user has added. deriveOutput
-  // prepends the derived columns and preserves these extras.
+  // Columns are DERIVED from Input (deriveOutput). NO tokens are seeded by default — every token
+  // is added explicitly through the modal (the Input→Next suggestion or the "Add Tokens" picker),
+  // so the token set is always the result of user consent. We seed only the encryption key, which
+  // is infrastructure (Added Data), not a linkage token.
   buildOutputGrid([
-    { kind: 'added', name: 'token_encryption_key' },
-    { kind: 'token', name: 'token_1', inputs: ['Last Name', 'First Name (First Char)', 'Gender', 'DOB'] },
-    { kind: 'token', name: 'token_2', inputs: ['SSN'] }
+    { kind: 'added', name: 'token_encryption_key' }
   ]);
   deriveOutput();
 
@@ -5258,10 +5600,22 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     if (/unspecified/.test(t)) return ['Rare Dates', 'SSNs', 'Tokens'];
     return ['Rare Dates', 'SSNs', 'Tokens'];
   }
+  var VAL_IC_CHECK = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+  var VAL_IC_WARN = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 2.6l6 10.4H2z"/><path d="M8 6.6v3" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="11.4" r=".85" fill="currentColor"/></svg>';
+  var VAL_IC_EDIT = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 5h6M11.5 5H14M2 11h2.5M8 11h6"/><circle cx="9.5" cy="5" r="1.6"/><circle cx="6" cy="11" r="1.6"/></svg>';
+  // Status pill content for N disabled checks (0 = all on).
+  function valBadgeInner(offCount) {
+    return offCount > 0
+      ? VAL_IC_WARN + ' ' + offCount + ' check' + (offCount > 1 ? 's' : '') + ' off'
+      : VAL_IC_CHECK + ' Validated';
+  }
   function valCellHTML(dataType, isToken) {
     var chips = validationChips(dataType, isToken).map(function (c) { return '<span class="ob-chip">' + c + '</span>'; }).join('');
-    return '<td class="ob-val-cell"><div class="ob-val val-on">' +
-      '<button class="ob-val-status" onclick="openValidators(this)">✓ Enabled</button>' +
+    return '<td class="ob-val-cell"><div class="ob-val val-on" data-rationale="">' +
+      '<div class="ob-val-row">' +
+        '<span class="ob-val-badge on">' + valBadgeInner(0) + '</span>' +
+        '<button class="ob-val-edit" type="button" onclick="openValidators(this)" title="Edit validation checks">' + VAL_IC_EDIT + ' Edit</button>' +
+      '</div>' +
       '<span class="ob-val-chips">' + chips + '</span>' +
     '</div></td>';
   }
@@ -5356,11 +5710,12 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
         var chip = Array.from(val.querySelectorAll('.ob-chip')).filter(function (c) { return c.textContent.trim() === label; })[0];
         if (chip) chip.classList.toggle('off', !t.checked);
       });
-      var anyOff = val.querySelectorAll('.ob-chip.off').length > 0;
+      var offCount = val.querySelectorAll('.ob-chip.off').length;
+      var anyOff = offCount > 0;
       val.classList.toggle('val-on', !anyOff);
       val.classList.toggle('val-off', anyOff);
-      var status = val.querySelector('.ob-val-status');
-      if (status) status.textContent = anyOff ? '⊘ Disabled' : '✓ Enabled';
+      var badge = val.querySelector('.ob-val-badge');
+      if (badge) { badge.classList.toggle('on', !anyOff); badge.classList.toggle('off', anyOff); badge.innerHTML = valBadgeInner(offCount); }
       val.setAttribute('data-rationale', rationale);
     });
     closeValidators();
@@ -5395,7 +5750,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     var chipsWrap = row.querySelector('.ob-val-chips');
     if (chipsWrap) chipsWrap.innerHTML = validationChips(dt, false).map(function (c) { return '<span class="ob-chip">' + c + '</span>'; }).join('');
     var val = row.querySelector('.ob-val');
-    if (val) { val.classList.add('val-on'); val.classList.remove('val-off'); var st = val.querySelector('.ob-val-status'); if (st) st.textContent = '✓ Enabled'; }
+    if (val) { val.classList.add('val-on'); val.classList.remove('val-off'); var b = val.querySelector('.ob-val-badge'); if (b) { b.classList.add('on'); b.classList.remove('off'); b.innerHTML = valBadgeInner(0); } }
   }
   function applyOnboardingEditable() {
     var tb = document.getElementById('onboarding-tbody'); if (!tb) return;
@@ -5425,7 +5780,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
       dataTypeCell(c.dataType) +
       '<td class="ob-map-cell">' +
         '<select class="cell-select ob-map" onchange="validateOnboarding()">' + profileMapOptions(mapping) + '</select>' +
-        '<div class="ob-warn" style="display:none"><div class="ob-warn-msg">⚠ No Profile Model Mapping — you won\'t be able to use this value on Match or Assess.</div></div>' +
+        '<div class="ob-warn" style="display:none"><div class="ob-warn-msg" title="This column isn\'t mapped to the Common Profile Model, so it can\'t be used in Match or Assess.">⚠ Not mapped — unusable in Match &amp; Assess</div></div>' +
       '</td>' +
       valCellHTML(c.dataType, false) +
       '<td><button class="icon-btn-delete" title="Delete column" onclick="confirmDeleteRow(this)">' + DELETE_SVG + '</button></td>' +
@@ -5496,8 +5851,20 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
       if (inputNames[nm]) { if (sel) prevMap[nm] = sel.value; }
       else { var dtSel = tr.querySelector('.ob-dt-select'); manualCols.push({ name: nm, dataType: dtSel ? dtSel.value : 'Unspecified', mapping: sel ? sel.value : undefined }); }
     });
+    // A column whose Output operation is "Null" carries no values into the onboarded table, so its
+    // Onboarding Data Type becomes "No values present" (which in turn drives the Non-null Values
+    // check). Mirrors the real de-id behaviour: PHI passthrough columns are nulled and only
+    // tokens / the linking ID carry through. Keyed by the column's Input source.
+    var nulledSrc = {};
+    var otbN = document.getElementById('output-tbody');
+    if (otbN) Array.from(otbN.querySelectorAll('tr')).forEach(function (tr) {
+      if (tr.querySelector('.op-static') || tr.querySelector('.op-added')) return; // skip token / added rows
+      var src = cellText(tr, 3);
+      var ops = Array.from(tr.querySelectorAll('.op-select')).map(function (s) { return s.value; });
+      if (src && ops.indexOf('Null') >= 0) nulledSrc[src] = true;
+    });
     var model = input.map(function (c) {
-      var dt = INPUT_TO_ONBOARDING_DT[c.type] || 'Unspecified';
+      var dt = nulledSrc[c.name] ? 'No values present' : (INPUT_TO_ONBOARDING_DT[c.type] || 'Unspecified');
       var m = { name: c.name, dataType: dt };
       if (prevMap[c.name]) m.mapping = prevMap[c.name];
       return m;
@@ -5515,24 +5882,13 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   deriveOnboarding();
 
   // ── Select Token modal (Output) ──
+  // Derived from the canonical TOKEN_DEFS (single source of truth, defined near the filter).
+  function _catList(cat){ return tokensByCat(cat).map(function(t){ return { id: t.id, fields: t.fields, tag: t.tag, note: t.note }; }); }
   var TOKEN_CATALOG = {
-    core: [
-      { id: 1,   fields: ['Last Name','First Name (First Character)','Gender','DOB'] },
-      { id: 2,   fields: ['Last Name Soundex','First Name Soundex','Gender','DOB'] },
-      { id: 5,   fields: ['SSN','Gender','DOB'] },
-      { id: 101, fields: ['Last Name','First Name (Confident Resolution)','DOB'] },
-      { id: 102, fields: ['Last Name','First Name (Fuzzy Resolution)','DOB'] },
-      { id: 103, fields: ['Last Name','First Name (Fuzzy Resolution, Metaphone)','DOB'] },
-      { id: 104, fields: ['Last Name','First Name (Confident Resolution)','Address (Standardized)','ZIP5'] },
-      { id: 105, fields: ['Last Name','First Name (Fuzzy Resolution)','Address (Standardized)','ZIP5'] },
-      { id: 106, fields: ['Last Name','First Name (Fuzzy Resolution, Metaphone)','DOB','ZIP3'] }
-    ],
-    standard: [
-      { id: 4, fields: ['Last Name','First Name','Gender','DOB'] },
-      { id: 7, fields: ['Last Name Soundex','First Name Soundex','Gender','DOB'] }
-    ],
+    core: _catList('core'),
+    standard: _catList('standard'),
     custom: [],
-    other: []
+    other: _catList('other')
   };
   var TOKEN_DESC = {
     core: "Core Tokens maximize the scale and quality of data exchange within Datavant's ecosystem. They are automatically created based on the PII available in your Table.",
@@ -5542,16 +5898,53 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   };
   var _tokenTab = 'core';
   var _tokenSel = {};
+  var _tokenSuggestNext = null;
 
   function openTokenModal() {
-    _tokenTab = 'core'; _tokenSel = {};
+    _tokenTab = 'core'; _tokenSel = {}; _tokenSuggestNext = null;
+    setTokenModalMode(false);
     var s = document.getElementById('token-search'); if (s) s.value = '';
     document.querySelectorAll('.tok-tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === 'core'); });
     renderTokenList();
     document.getElementById('token-modal').classList.add('open');
   }
   function closeTokenModal() { document.getElementById('token-modal').classList.remove('open'); }
-  function handleTokenOverlay(e) { if (e.target === document.getElementById('token-modal')) closeTokenModal(); }
+  function handleTokenOverlay(e) { if (e.target === document.getElementById('token-modal')) tokenModalCancel(); }
+  // Toggle the modal between the normal "Add tokens" picker and the Input→Next "suggest" mode.
+  function setTokenModalMode(isSuggest){
+    var title=document.getElementById('token-modal-title'); if(title) title.textContent = isSuggest ? 'Add recommended Core tokens' : 'Select Token';
+    var note=document.getElementById('token-suggest-note'); if(note) note.style.display = isSuggest ? '' : 'none';
+    var c=document.getElementById('token-cancel-btn'); if(c) c.textContent = isSuggest ? 'Skip' : 'Cancel';
+    var ok=document.getElementById('token-confirm-btn'); if(ok) ok.textContent = isSuggest ? 'Add tokens' : 'Select';
+  }
+  // Names of tokens already present in the Output grid (token rows).
+  function outputTokenNames(){
+    var s={}; document.querySelectorAll('#output-tbody .op-static').forEach(function(el){
+      var tr=el.closest('tr'); var nm=(tr&&tr.cells[2])?tr.cells[2].textContent.trim():''; if(nm) s[nm]=true;
+    }); return s;
+  }
+  // Core tokens that the current Input can generate but aren't in Output yet.
+  function coreSuggestPending(){
+    var avail=getAvailablePII(); var have=outputTokenNames();
+    return (TOKEN_CATALOG.core||[]).filter(function(t){ return tokenEnabled(t, avail) && !have['token_'+t.id]; });
+  }
+  // Open the picker in suggest mode: Core tab, every generatable Core token pre‑checked,
+  // ungeneratable ones disabled. `next` runs after the user adds or skips.
+  function openCoreTokenSuggest(next){
+    _tokenSuggestNext = (typeof next === 'function') ? next : null;
+    _tokenTab='core'; _tokenSel={};
+    var avail=getAvailablePII();
+    // Preselect EVERY generatable Core token (anything that can be checked, is). Ones already in
+    // Output are deduped on Add, so pre‑checking them is harmless.
+    (TOKEN_CATALOG.core||[]).forEach(function(t){ if(tokenEnabled(t, avail)) _tokenSel[t.id]=true; });
+    var s=document.getElementById('token-search'); if(s) s.value='';
+    document.querySelectorAll('.tok-tab').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-tab')==='core'); });
+    setTokenModalMode(true);
+    renderTokenList();
+    document.getElementById('token-modal').classList.add('open');
+  }
+  // Cancel / Skip / overlay / ✕ — in suggest mode this still advances to the next step.
+  function tokenModalCancel(){ var next=_tokenSuggestNext; _tokenSuggestNext=null; closeTokenModal(); if(next) next(); }
   function tokenTab(tab) {
     _tokenTab = tab;
     document.querySelectorAll('.tok-tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === tab); });
@@ -5563,6 +5956,8 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   // PII availability + token matching
   function piiKeyForType(t) {
     t = String(t || '').toLowerCase();
+    if (/maiden/.test(t)) return 'maidenname';
+    if (/middle name/.test(t)) return 'middlename';
     if (/first name/.test(t)) return 'firstname';
     if (/last name/.test(t)) return 'lastname';
     if (/gender/.test(t)) return 'gender';
@@ -5570,6 +5965,10 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     if (/social security|ssn/.test(t)) return 'ssn';
     if (/address/.test(t)) return 'address';
     if (/zip|postal/.test(t)) return 'zip';
+    if (/phone|cell/.test(t)) return 'phone';
+    if (/email/.test(t)) return 'email';
+    if (/state/.test(t)) return 'state';
+    if (/source patient id|source/.test(t)) return 'sourceid';
     return null;
   }
   function getAvailablePII() {
@@ -5581,19 +5980,25 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
     var keys = {};
     fields.forEach(function (f) {
       var x = f.toLowerCase();
-      if (/last name/.test(x)) keys.lastname = 1;
+      if (/maiden/.test(x)) keys.maidenname = 1;
+      else if (/middle name/.test(x)) keys.middlename = 1;
+      else if (/last name/.test(x)) keys.lastname = 1;
       else if (/first name/.test(x)) keys.firstname = 1;
       else if (/gender/.test(x)) keys.gender = 1;
-      else if (/dob/.test(x)) keys.dob = 1;
+      else if (/dob|birth/.test(x)) keys.dob = 1;          // Birth Year/Month approximated to DOB
       else if (/ssn/.test(x)) keys.ssn = 1;
       else if (/address/.test(x)) keys.address = 1;
       else if (/zip/.test(x)) keys.zip = 1;
+      else if (/phone|cell/.test(x)) keys.phone = 1;
+      else if (/email/.test(x)) keys.email = 1;
+      else if (/state/.test(x)) keys.state = 1;
+      else if (/source patient id/.test(x)) keys.sourceid = 1;
     });
     return Object.keys(keys);
   }
   function tokenEnabled(t, avail) { return tokenReqKeys(t.fields).every(function (k) { return avail[k]; }); }
   function tokenMissing(t, avail) {
-    var labels = { lastname: 'Last Name', firstname: 'First Name', gender: 'Gender', dob: 'DOB', ssn: 'SSN', address: 'Address', zip: 'Zip' };
+    var labels = { lastname: 'Last Name', firstname: 'First Name', middlename: 'Middle Name', maidenname: 'Maiden Name', gender: 'Gender', dob: 'DOB', ssn: 'SSN', address: 'Address', zip: 'Zip', phone: 'Cell Phone', email: 'Email', state: 'State', sourceid: 'Source Patient ID' };
     return tokenReqKeys(t.fields).filter(function (k) { return !avail[k]; }).map(function (k) { return labels[k]; });
   }
   function tokenFilter(t, q) { return !q || ('token ' + t.id).indexOf(q) >= 0 || t.fields.join(' ').toLowerCase().indexOf(q) >= 0; }
@@ -5612,7 +6017,7 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
         var missing = enabled ? '' : '<div class="tok-missing">Needs ' + tokenMissing(t, avail).join(', ') + '</div>';
         return '<tr class="' + (enabled ? '' : 'tok-row-disabled') + '">' +
           '<td><input type="checkbox" class="tok-check" ' + (enabled ? '' : 'disabled') + ' ' + (_tokenSel[t.id] ? 'checked' : '') + ' onchange="toggleTokenSelect(' + t.id + ', this.checked)"></td>' +
-          '<td>Token ' + t.id + '</td>' +
+          '<td>' + tokenLabel(t) + '</td>' +
           '<td>' + tokenChips(t.fields) + missing + '</td>' +
         '</tr>';
       }).join('');
@@ -5653,7 +6058,9 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   function confirmTokenSelect() {
     var tb = document.getElementById('output-tbody');
     if (tb) {
+      var have = outputTokenNames();
       Object.keys(_tokenSel).forEach(function (id) {
+        if (have['token_' + id]) return; // dedupe — don't add a token already in Output
         var t = findToken(id); if (!t) return;
         var tmp = document.createElement('tbody');
         tmp.innerHTML = outputTokenRowHTML({ name: 'token_' + id, inputs: t.fields });
@@ -5662,7 +6069,9 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
       renumberOutput();
       if (typeof onOutputCheck === 'function') onOutputCheck();
     }
+    var next = _tokenSuggestNext; _tokenSuggestNext = null;
     closeTokenModal();
+    if (next) next();
   }
 </script>
 
@@ -5778,6 +6187,121 @@ James,Jonlin,M,1995/09/09,2014/01/31</div>
   window.addEventListener('resize', render);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closePop(); cbCloseAll(); if(st.add) cbToggleAdd(); } });
   setCount(); render();
+})();
+</script>
+
+<!-- ════ Deep-link router + spotlight — lets the dev hand-off reference live prototype states ════ -->
+<style>
+  /* Reference spotlight BLOCKS interaction (pointer-events:auto) until dismissed via the ✕. */
+  .spot-overlay{ position:fixed; inset:0; z-index:9998; pointer-events:auto; }
+  .spot-hole{ position:fixed; border-radius:8px; box-shadow:0 0 0 9999px rgba(15,23,42,.55); outline:2.5px solid #2945f0; transition:all .18s ease; pointer-events:none; }
+  .spot-lbl{ position:fixed; z-index:9999; background:#2945f0; color:#fff; font:600 12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; padding:5px 9px; border-radius:6px; max-width:280px; box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none; }
+  .spot-close{ position:fixed; z-index:10000; width:30px; height:30px; border-radius:50%; background:#1f2d3d; color:#fff; border:2px solid #fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,.4); padding:0; }
+  .spot-close:hover{ background:#2945f0; }
+  /* Embed mode (used when the hand-off iframes the prototype): hide the comment bar, reclaim its space. */
+  body.embed-mode .cb-topbar{ display:none; }
+  body.embed-mode{ padding-top:0; }
+  body.embed-mode .sidebar{ top:0; height:100vh; }
+  /* In an embedded preview the spotlight is LIGHT + non-blocking (no heavy blackout, no ✕). */
+  body.embed-mode .spot-overlay{ pointer-events:none; }
+  body.embed-mode .spot-hole{ box-shadow:0 0 0 9999px rgba(15,23,42,.12); outline:2.5px solid #2945f0; }
+  body.embed-mode .spot-close{ display:none; }
+</style>
+<script>
+(function(){
+  // Named highlight regions → selectors (the hand-off references these by key; a raw selector also works).
+  var HL = {
+    'add-config':'[onclick^="openSetup"]', 'filters':'.landing-header-right', 'tokens-filter':'#tf-trigger',
+    'site-filter':'#sf', 'search':'.dart-search-wrap', 'row-kebab':'#configs-tbody .parent-row .row-kebab',
+    'versions':'#configs-tbody .expand-btn', 'role-switch':'.cb-role-wrap', 'stepper':'.wh-stepper',
+    'footer':'#wiz-footer', 'input-grid':'#input-tbody', 'output-grid':'#output-tbody',
+    'output-bulk':'#output-bulk-bar', 'onboarding-grid':'#onboarding-tbody', 'validation':'#onboarding-tbody .ob-val',
+    'run-test':'#btn-runtest', 'download':'#btn-download', 'edit-setup':'#btn-editsetup', 'restore':'#btn-restore',
+    'edit':'#btn-edit', 'save':'#btn-save', 'detail-actions':'.wh-actions'
+  };
+  function sel(hl){ return HL[hl] || hl; }
+  var spot=null, spotSel=null;
+  function clearSpot(){ if(spot){ spot.remove(); spot=null; } spotSel=null; }
+  function place(){
+    if(!spot||!spotSel) return;
+    var el=document.querySelector(spotSel); if(!el) return;
+    var r=el.getBoundingClientRect(), pad=8, hole=spot.querySelector('.spot-hole'), lbl=spot.querySelector('.spot-lbl'), x=spot.querySelector('.spot-close');
+    hole.style.left=(r.left-pad)+'px'; hole.style.top=(r.top-pad)+'px';
+    hole.style.width=(r.width+pad*2)+'px'; hole.style.height=(r.height+pad*2)+'px';
+    if(lbl){ lbl.style.left=(r.left-pad)+'px'; lbl.style.top=Math.max(6,(r.top-pad-30))+'px'; }
+    if(x){ x.style.left=(r.right+pad-15)+'px'; x.style.top=(r.top-pad-15)+'px'; }
+  }
+  function spotlight(s,label){
+    clearSpot();
+    var el=document.querySelector(s); if(!el) return;
+    spotSel=s;
+    try{ el.scrollIntoView({block:'center'}); }catch(e){}
+    spot=document.createElement('div'); spot.className='spot-overlay';
+    spot.innerHTML='<div class="spot-hole"></div>'+(label?('<div class="spot-lbl">'+label+'</div>'):'')+
+      '<button class="spot-close" type="button" title="Close reference & explore" aria-label="Close reference and explore the prototype"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>';
+    document.body.appendChild(spot);
+    // Dismiss → page becomes fully interactive from here on.
+    spot.querySelector('.spot-close').addEventListener('click', function(e){ e.stopPropagation(); clearSpot(); });
+    place();
+  }
+  window._spotlight=spotlight;
+  window.addEventListener('resize', place, true);
+  window.addEventListener('scroll', place, true);
+
+  function firstRow(cls){ return document.querySelector('#configs-tbody .parent-row.'+cls); }
+  function startCreate(){
+    try{ var n=document.getElementById('wiz-name'); if(n&&!n.value) n.value='Sample Configuration';
+         var s=document.getElementById('wiz-site'); if(s&&!s.value) s.value='datavant'; }catch(e){}
+    _wizardMode='create'; _wizardSaved=true; if(typeof showView==='function') showView('wizard');
+  }
+  // Actions drive the prototype to the EXACT state an IMP is about (open a modal, enter edit, etc.) —
+  // so a reference lands where the feature actually lives, not just a nearby screen.
+  function doAct(p){
+    var a=p.act, hl=p.hl, lbl=p.lbl||'';
+    function spotHl(ms){ if(hl) setTimeout(function(){ spotlight(sel(hl), lbl); }, ms||320); }
+    function withOwned(steps){ showView('landing'); setTimeout(function(){ var r=firstRow('row-private'); if(r){ openConfig(r); steps(); } }, 180); }
+    switch(a){
+      case 'cancel-edit':   withOwned(function(){ setTimeout(function(){ enterEditMode(); setTimeout(cancelEdit,360); },340); }); break;
+      case 'edit-detail':   withOwned(function(){ setTimeout(function(){ enterEditMode(); spotHl(320); },340); }); break;
+      case 'settings':      withOwned(function(){ setTimeout(function(){ enterEditMode(); setTimeout(function(){ openSetup(true); },360); },340); }); break;
+      case 'share':         withOwned(function(){ setTimeout(function(){ if(typeof shareConfig==='function') shareConfig(); },360); }); break;
+      case 'clone':         withOwned(function(){ setTimeout(function(){ if(typeof cloneConfig==='function') cloneConfig(); },360); }); break;
+      case 'view-shared':   showView('landing'); setTimeout(function(){ var r=firstRow('row-shared'); if(r){ openConfig(r); spotHl(420); } },200); break;
+      case 'token-suggest': startCreate(); setTimeout(function(){ goWizStep('input'); setTimeout(function(){ openCoreTokenSuggest(); },340); },240); break;
+      case 'token-modal':   startCreate(); setTimeout(function(){ goWizStep('output'); setTimeout(function(){ openTokenModal(); },340); },240); break;
+      case 'run-test':      startCreate(); setTimeout(function(){ goWizStep('validate'); setTimeout(function(){ runTest(); },340); },240); break;
+      case 'expand-versions': showView('landing'); setTimeout(function(){ var b=document.querySelector('#configs-tbody .expand-btn'); if(b){ var m=/toggleVersions\('([^']+)'/.exec(b.getAttribute('onclick')||''); if(m && !b.classList.contains('open')) toggleVersions(m[1],b); setTimeout(function(){ spotlight('#configs-tbody .version-child.visible', lbl); },200); } },260); break;
+      case 'open-kebab':    showView('landing'); setTimeout(function(){ var k=document.querySelector('#configs-tbody .parent-row.row-private .row-kebab'); if(k && typeof openRowMenu==='function') openRowMenu(k); },320); break;
+      case 'token-filter':  showView('landing'); setTimeout(function(){ if(typeof tfToggle==='function') tfToggle(); setTimeout(function(){ spotlight('#tf-panel', lbl); },200); },260); break;
+      case 'role-validation': if(typeof setRole==='function') setRole('datavanter'); withOwned(function(){ setTimeout(function(){ switchTab(2); setTimeout(function(){ spotlight('#onboarding-tbody .ob-val', lbl||'Validation (Datavanter only)'); },300); },340); }); break;
+      default: break;
+    }
+  }
+  function applyRoute(){
+    var h=(location.hash||'').replace(/^#/,''); if(!h) return;
+    var p={}; h.split('&').forEach(function(kv){ var i=kv.indexOf('='); var k=i<0?kv:kv.slice(0,i); p[k]=decodeURIComponent(i<0?'':kv.slice(i+1)); });
+    if(p.embed==='1') document.body.classList.add('embed-mode');
+    clearSpot();
+    try{
+      if(p.act){ doAct(p); return; }
+      var v=p.v||'landing';
+      function after(){
+        if(p.tab!=null && p.tab!=='' && typeof switchTab==='function') switchTab(parseInt(p.tab,10)||0);
+        if(p.step && typeof goWizStep==='function') goWizStep(p.step);
+        if(p.hl) setTimeout(function(){ spotlight(sel(p.hl), p.lbl||''); }, 280);
+      }
+      if(v==='landing'){ if(typeof showView==='function') showView('landing'); setTimeout(after,150); }
+      else if(v==='detail'){
+        var row=firstRow('row-private');
+        if(row && typeof openConfig==='function') openConfig(row); else if(typeof showView==='function') showView('wizard');
+        setTimeout(after,220);
+      }
+      else if(v==='create'){ startCreate(); setTimeout(after,220); }
+    }catch(e){}
+  }
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && spot) clearSpot(); });
+  window.addEventListener('hashchange', function(){ applyRoute(); });
+  window.addEventListener('load', function(){ setTimeout(applyRoute,150); });
 })();
 </script>
 </body>
